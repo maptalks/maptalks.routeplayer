@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="UTF-8" />
     <title>maptalks.heat demo</title>
     <script src="https://unpkg.com/maptalks@<2.0.0/dist/maptalks.min.js"></script>
     <script src="../dist/maptalks.routeplayer.js"></script>
@@ -44,6 +45,7 @@ var map = new maptalks.Map("map",{
 });
 var player = new maptalks.RoutePlayer(route, map);
 var unitTime = player.getUnitTime();
+player.play();
 
 function play() {
     player.play();
