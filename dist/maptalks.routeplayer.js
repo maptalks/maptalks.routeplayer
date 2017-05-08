@@ -3,6 +3,9 @@
  * LICENSE : MIT
  * (c) 2016-2017 maptalks.org
  */
+/*!
+ * requires maptalks@^0.23.0 
+ */
 (function (global, factory) {
 	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('maptalks')) :
 	typeof define === 'function' && define.amd ? define(['exports', 'maptalks'], factory) :
@@ -76,7 +79,7 @@ var options = {
     'showRoutes': true,
     'markerSymbol': null,
     'lineSymbol': {
-        'lineWidth': 5,
+        'lineWidth': 2,
         'lineColor': '#004A8D'
     }
 };
@@ -94,11 +97,14 @@ var RoutePlayer = function (_maptalks$Eventable) {
         }
         _this.id = maptalks.Util.UID();
         _this._map = map;
+        _this._registerEvents();
         _this._setup(routes);
         return _this;
     }
 
     RoutePlayer.prototype.remove = function remove() {
+        this.finish();
+        this._removeEvents();
         this.markerLayer.remove();
         this.lineLayer.remove();
         delete this._map;
@@ -187,6 +193,9 @@ var RoutePlayer = function (_maptalks$Eventable) {
     };
 
     RoutePlayer.prototype._drawRoute = function _drawRoute(route, t) {
+        if (!this._map) {
+            return;
+        }
         var coordinates = route.getCoordinates(t, this._map);
         if (!coordinates) {
             return;
@@ -207,11 +216,13 @@ var RoutePlayer = function (_maptalks$Eventable) {
     };
 
     RoutePlayer.prototype._setup = function _setup(rs) {
-        var routes = [new Route(rs[0])];
+        var routes = rs.map(function (r) {
+            return new Route(r);
+        });
         var start = routes[0].getStart(),
             end = routes[0].getEnd();
-        for (var i = 1; i < rs.length; i++) {
-            var route = new Route(rs[i]);
+        for (var i = 1; i < routes.length; i++) {
+            var route = routes[i];
             if (route.getStart() < start) {
                 start = route.getStart();
             }
@@ -238,6 +249,28 @@ var RoutePlayer = function (_maptalks$Eventable) {
         this.markerLayer = new maptalks.VectorLayer(maptalks.INTERNAL_LAYER_PREFIX + '_routeplay_m_' + this.id).addTo(this._map);
     };
 
+    RoutePlayer.prototype._registerEvents = function _registerEvents() {
+        this._map.on('zoomstart', this.onZoomStart, this).on('zoomend', this.onZoomEnd, this);
+    };
+
+    RoutePlayer.prototype._removeEvents = function _removeEvents() {
+        this._map.off('zoomstart', this.onZoomStart, this).off('zoomend', this.onZoomEnd, this);
+    };
+
+    RoutePlayer.prototype.onZoomStart = function onZoomStart() {
+        if (!this.player) {
+            return;
+        }
+        this.player.pause();
+    };
+
+    RoutePlayer.prototype.onZoomEnd = function onZoomEnd() {
+        if (!this.player) {
+            return;
+        }
+        this.player.play();
+    };
+
     return RoutePlayer;
 }(maptalks.Eventable(maptalks.Class));
 
@@ -247,5 +280,7 @@ exports.Route = Route;
 exports.RoutePlayer = RoutePlayer;
 
 Object.defineProperty(exports, '__esModule', { value: true });
+
+typeof console !== 'undefined' && console.log('maptalks.routeplayer v0.1.0, requires maptalks@^0.23.0.');
 
 })));

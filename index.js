@@ -55,7 +55,7 @@ const options = {
     'showRoutes' : true,
     'markerSymbol' : null,
     'lineSymbol' : {
-        'lineWidth' : 5,
+        'lineWidth' : 2,
         'lineColor' : '#004A8D'
     }
 };
@@ -69,10 +69,13 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
         }
         this.id = maptalks.Util.UID();
         this._map = map;
+        this._registerEvents();
         this._setup(routes);
     }
 
     remove() {
+        this.finish();
+        this._removeEvents();
         this.markerLayer.remove();
         this.lineLayer.remove();
         delete this._map;
@@ -161,6 +164,9 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
     }
 
     _drawRoute(route, t) {
+        if (!this._map) {
+            return;
+        }
         const coordinates = route.getCoordinates(t, this._map);
         if (!coordinates) {
             return;
@@ -181,11 +187,11 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
     }
 
     _setup(rs) {
-        const routes = [new Route(rs[0])];
+        const routes = rs.map(r => new Route(r));
         var start = routes[0].getStart(),
             end = routes[0].getEnd();
-        for (let i = 1; i < rs.length; i++) {
-            let route = new Route(rs[i]);
+        for (let i = 1; i < routes.length; i++) {
+            let route = routes[i];
             if (route.getStart() < start) {
                 start = route.getStart();
             }
@@ -210,6 +216,30 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
     _createLayers() {
         this.lineLayer = new maptalks.VectorLayer(maptalks.INTERNAL_LAYER_PREFIX + '_routeplay_r_' + this.id).addTo(this._map);
         this.markerLayer = new maptalks.VectorLayer(maptalks.INTERNAL_LAYER_PREFIX + '_routeplay_m_' + this.id).addTo(this._map);
+    }
+
+    _registerEvents() {
+        this._map.on('zoomstart', this.onZoomStart, this)
+            .on('zoomend', this.onZoomEnd, this);
+    }
+
+    _removeEvents() {
+        this._map.off('zoomstart', this.onZoomStart, this)
+            .off('zoomend', this.onZoomEnd, this);
+    }
+
+    onZoomStart() {
+        if (!this.player) {
+            return;
+        }
+        this.player.pause();
+    }
+
+    onZoomEnd() {
+        if (!this.player) {
+            return;
+        }
+        this.player.play();
     }
 }
 
