@@ -69,25 +69,35 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
         }
         this.id = maptalks.Util.UID();
         this._map = map;
-        this._registerEvents();
         this._setup(routes);
     }
 
     remove() {
+        if (!this.markerLayer) {
+            return this;
+        }
         this.finish();
-        this._removeEvents();
         this.markerLayer.remove();
         this.lineLayer.remove();
+        delete this.markerLayer;
+        delete this.lineLayer;
         delete this._map;
+        return this;
     }
 
     play() {
+        if (this.player.playState === 'running') {
+            return this;
+        }
         this.player.play();
         this.fire('playstart');
         return this;
     }
 
     pause() {
+        if (this.player.playState === 'paused') {
+            return this;
+        }
         this.player.pause();
         this.fire('playpause');
         return this;
@@ -103,10 +113,21 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
     }
 
     finish() {
+        if (this.player.playState === 'finished') {
+            return this;
+        }
         this.player.finish();
         this._step({ 'styles':{ 't':1 }});
         this.fire('playfinish');
         return this;
+    }
+
+    getStartTime() {
+        return this.startTime || 0;
+    }
+
+    getEndTime() {
+        return this.endTime || 0;
     }
 
     getCurrentTime() {
@@ -156,6 +177,12 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
     }
 
     _step(frame) {
+        if (frame.state && frame.state.playState !== 'running') {
+            if (frame.state.playState === 'finished') {
+                this.fire('playfinish');
+            }
+            return;
+        }
         this.played = this.duration * frame.styles.t;
         for (let i = 0, l = this.routes.length; i < l; i++) {
             this._drawRoute(this.routes[i], this.startTime + this.played);
@@ -169,20 +196,29 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
         }
         const coordinates = route.getCoordinates(t, this._map);
         if (!coordinates) {
+            if (route._painter && route._painter.marker) {
+                route._painter.marker.remove();
+                delete route._painter.marker;
+            }
             return;
         }
         if (!route._painter) {
             route._painter = {};
+        }
+        if (!route._painter.marker) {
             const marker = new maptalks.Marker(coordinates.coordinate, {
                 symbol : route.markerSymbol || this.options['markerSymbol']
             }).addTo(this.markerLayer);
+            route._painter.marker = marker;
+        } else {
+            route._painter.marker.setCoordinates(coordinates.coordinate);
+        }
+        if (!route._painter.line) {
             const line = new maptalks.LineString(route.path, {
                 symbol : route.lineSymbol || this.options['lineSymbol']
             }).addTo(this.lineLayer);
-            route._painter.marker = marker;
+
             route._painter.line = line;
-        } else {
-            route._painter.marker.setCoordinates(coordinates.coordinate);
         }
     }
 
@@ -210,36 +246,29 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
 
     _createPlayer() {
         const duration = (this.duration - this.played) / this.options['unitTime'];
-        this.player = maptalks.animation.Animation.animate({ 't' : [this.played / this.duration, 1] }, { 'speed' : duration, 'easing' : 'linear' }, this._step.bind(this));
+        let framer;
+        const renderer = this._map._getRenderer();
+        if (renderer.callInFrameLoop) {
+            framer = function (fn) {
+                renderer.callInFrameLoop(fn);
+            };
+        }
+        this.player = maptalks.animation.Animation.animate(
+            {
+                't' : [this.played / this.duration, 1]
+            },
+            {
+                'framer' : framer,
+                'speed' : duration,
+                'easing' : 'linear'
+            },
+            this._step.bind(this)
+        );
     }
 
     _createLayers() {
         this.lineLayer = new maptalks.VectorLayer(maptalks.INTERNAL_LAYER_PREFIX + '_routeplay_r_' + this.id).addTo(this._map);
         this.markerLayer = new maptalks.VectorLayer(maptalks.INTERNAL_LAYER_PREFIX + '_routeplay_m_' + this.id).addTo(this._map);
-    }
-
-    _registerEvents() {
-        this._map.on('zoomstart', this.onZoomStart, this)
-            .on('zoomend', this.onZoomEnd, this);
-    }
-
-    _removeEvents() {
-        this._map.off('zoomstart', this.onZoomStart, this)
-            .off('zoomend', this.onZoomEnd, this);
-    }
-
-    onZoomStart() {
-        if (!this.player) {
-            return;
-        }
-        this.player.pause();
-    }
-
-    onZoomEnd() {
-        if (!this.player) {
-            return;
-        }
-        this.player.play();
     }
 }
 
