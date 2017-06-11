@@ -97,26 +97,36 @@ var RoutePlayer = function (_maptalks$Eventable) {
         }
         _this.id = maptalks.Util.UID();
         _this._map = map;
-        _this._registerEvents();
         _this._setup(routes);
         return _this;
     }
 
     RoutePlayer.prototype.remove = function remove() {
+        if (!this.markerLayer) {
+            return this;
+        }
         this.finish();
-        this._removeEvents();
         this.markerLayer.remove();
         this.lineLayer.remove();
+        delete this.markerLayer;
+        delete this.lineLayer;
         delete this._map;
+        return this;
     };
 
     RoutePlayer.prototype.play = function play() {
+        if (this.player.playState === 'running') {
+            return this;
+        }
         this.player.play();
         this.fire('playstart');
         return this;
     };
 
     RoutePlayer.prototype.pause = function pause() {
+        if (this.player.playState === 'paused') {
+            return this;
+        }
         this.player.pause();
         this.fire('playpause');
         return this;
@@ -132,10 +142,21 @@ var RoutePlayer = function (_maptalks$Eventable) {
     };
 
     RoutePlayer.prototype.finish = function finish() {
+        if (this.player.playState === 'finished') {
+            return this;
+        }
         this.player.finish();
         this._step({ 'styles': { 't': 1 } });
         this.fire('playfinish');
         return this;
+    };
+
+    RoutePlayer.prototype.getStartTime = function getStartTime() {
+        return this.startTime || 0;
+    };
+
+    RoutePlayer.prototype.getEndTime = function getEndTime() {
+        return this.endTime || 0;
     };
 
     RoutePlayer.prototype.getCurrentTime = function getCurrentTime() {
@@ -185,6 +206,12 @@ var RoutePlayer = function (_maptalks$Eventable) {
     };
 
     RoutePlayer.prototype._step = function _step(frame) {
+        if (frame.state && frame.state.playState !== 'running') {
+            if (frame.state.playState === 'finished') {
+                this.fire('playfinish');
+            }
+            return;
+        }
         this.played = this.duration * frame.styles.t;
         for (var i = 0, l = this.routes.length; i < l; i++) {
             this._drawRoute(this.routes[i], this.startTime + this.played);
@@ -198,20 +225,29 @@ var RoutePlayer = function (_maptalks$Eventable) {
         }
         var coordinates = route.getCoordinates(t, this._map);
         if (!coordinates) {
+            if (route._painter && route._painter.marker) {
+                route._painter.marker.remove();
+                delete route._painter.marker;
+            }
             return;
         }
         if (!route._painter) {
             route._painter = {};
+        }
+        if (!route._painter.marker) {
             var marker = new maptalks.Marker(coordinates.coordinate, {
                 symbol: route.markerSymbol || this.options['markerSymbol']
             }).addTo(this.markerLayer);
+            route._painter.marker = marker;
+        } else {
+            route._painter.marker.setCoordinates(coordinates.coordinate);
+        }
+        if (!route._painter.line) {
             var line = new maptalks.LineString(route.path, {
                 symbol: route.lineSymbol || this.options['lineSymbol']
             }).addTo(this.lineLayer);
-            route._painter.marker = marker;
+
             route._painter.line = line;
-        } else {
-            route._painter.marker.setCoordinates(coordinates.coordinate);
         }
     };
 
@@ -241,34 +277,25 @@ var RoutePlayer = function (_maptalks$Eventable) {
 
     RoutePlayer.prototype._createPlayer = function _createPlayer() {
         var duration = (this.duration - this.played) / this.options['unitTime'];
-        this.player = maptalks.animation.Animation.animate({ 't': [this.played / this.duration, 1] }, { 'speed': duration, 'easing': 'linear' }, this._step.bind(this));
+        var framer = void 0;
+        var renderer = this._map._getRenderer();
+        if (renderer.callInFrameLoop) {
+            framer = function framer(fn) {
+                renderer.callInFrameLoop(fn);
+            };
+        }
+        this.player = maptalks.animation.Animation.animate({
+            't': [this.played / this.duration, 1]
+        }, {
+            'framer': framer,
+            'speed': duration,
+            'easing': 'linear'
+        }, this._step.bind(this));
     };
 
     RoutePlayer.prototype._createLayers = function _createLayers() {
         this.lineLayer = new maptalks.VectorLayer(maptalks.INTERNAL_LAYER_PREFIX + '_routeplay_r_' + this.id).addTo(this._map);
         this.markerLayer = new maptalks.VectorLayer(maptalks.INTERNAL_LAYER_PREFIX + '_routeplay_m_' + this.id).addTo(this._map);
-    };
-
-    RoutePlayer.prototype._registerEvents = function _registerEvents() {
-        this._map.on('zoomstart', this.onZoomStart, this).on('zoomend', this.onZoomEnd, this);
-    };
-
-    RoutePlayer.prototype._removeEvents = function _removeEvents() {
-        this._map.off('zoomstart', this.onZoomStart, this).off('zoomend', this.onZoomEnd, this);
-    };
-
-    RoutePlayer.prototype.onZoomStart = function onZoomStart() {
-        if (!this.player) {
-            return;
-        }
-        this.player.pause();
-    };
-
-    RoutePlayer.prototype.onZoomEnd = function onZoomEnd() {
-        if (!this.player) {
-            return;
-        }
-        this.player.play();
     };
 
     return RoutePlayer;
