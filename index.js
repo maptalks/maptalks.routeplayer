@@ -48,6 +48,28 @@ export class Route {
     getCount() {
         return this.path.length;
     }
+
+    get markerSymbol() {
+        return this.route.markerSymbol;
+    }
+
+    set markerSymbol(symbol) {
+        this.route.markerSymbol = symbol;
+        if (this._painter && this._painter.marker) {
+            this._painter.marker.setSymbol(symbol);
+        }
+    }
+
+    get lineSymbol() {
+        return this.route.lineSymbol;
+    }
+
+    set lineSymbol(symbol) {
+        this.route.lineSymbol = symbol;
+        if (this._painter && this._painter.marker) {
+            this._painter.line.setSymbol(symbol);
+        }
+    }
 }
 
 const options = {
@@ -163,6 +185,34 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
             return null;
         }
         return this.routes[index]._painter.marker.getCoordinates();
+    }
+
+    getMarkerSymbol(idx) {
+        if (this.routes && this.routes[idx]) {
+            return this.routes[idx].markerSymbol;
+        }
+        return null;
+    }
+
+    setMarkerSymbol(idx, symbol) {
+        if (this.routes && this.routes[idx]) {
+            this.routes[idx].markerSymbol = symbol;
+        }
+        return this;
+    }
+
+    getLineSymbol(idx) {
+        if (this.routes && this.routes[idx]) {
+            return this.routes[idx].lineSymbol;
+        }
+        return null;
+    }
+
+    setLineSymbol(idx, symbol) {
+        if (this.routes && this.routes[idx]) {
+            this.routes[idx].lineSymbol = symbol;
+        }
+        return this;
     }
 
     _resetPlayer() {
