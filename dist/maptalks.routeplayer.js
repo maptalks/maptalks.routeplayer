@@ -12,6 +12,8 @@
 	(factory((global.maptalks = global.maptalks || {}),global.maptalks));
 }(this, (function (exports,maptalks) { 'use strict';
 
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
 function _defaults(obj, defaults) { var keys = Object.getOwnPropertyNames(defaults); for (var i = 0; i < keys.length; i++) { var key = keys[i]; var value = Object.getOwnPropertyDescriptor(defaults, key); if (value && value.configurable && obj[key] === undefined) { Object.defineProperty(obj, key, value); } } return obj; }
 
 function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
@@ -70,6 +72,30 @@ var Route = function () {
     Route.prototype.getCount = function getCount() {
         return this.path.length;
     };
+
+    _createClass(Route, [{
+        key: 'markerSymbol',
+        get: function get() {
+            return this.route.markerSymbol;
+        },
+        set: function set(symbol) {
+            this.route.markerSymbol = symbol;
+            if (this._painter && this._painter.marker) {
+                this._painter.marker.setSymbol(symbol);
+            }
+        }
+    }, {
+        key: 'lineSymbol',
+        get: function get() {
+            return this.route.lineSymbol;
+        },
+        set: function set(symbol) {
+            this.route.lineSymbol = symbol;
+            if (this._painter && this._painter.marker) {
+                this._painter.line.setSymbol(symbol);
+            }
+        }
+    }]);
 
     return Route;
 }();
@@ -192,6 +218,34 @@ var RoutePlayer = function (_maptalks$Eventable) {
             return null;
         }
         return this.routes[index]._painter.marker.getCoordinates();
+    };
+
+    RoutePlayer.prototype.getMarkerSymbol = function getMarkerSymbol(idx) {
+        if (this.routes && this.routes[idx]) {
+            return this.routes[idx].markerSymbol;
+        }
+        return null;
+    };
+
+    RoutePlayer.prototype.setMarkerSymbol = function setMarkerSymbol(idx, symbol) {
+        if (this.routes && this.routes[idx]) {
+            this.routes[idx].markerSymbol = symbol;
+        }
+        return this;
+    };
+
+    RoutePlayer.prototype.getLineSymbol = function getLineSymbol(idx) {
+        if (this.routes && this.routes[idx]) {
+            return this.routes[idx].lineSymbol;
+        }
+        return null;
+    };
+
+    RoutePlayer.prototype.setLineSymbol = function setLineSymbol(idx, symbol) {
+        if (this.routes && this.routes[idx]) {
+            this.routes[idx].lineSymbol = symbol;
+        }
+        return this;
     };
 
     RoutePlayer.prototype._resetPlayer = function _resetPlayer() {
