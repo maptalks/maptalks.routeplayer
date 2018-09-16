@@ -13,7 +13,7 @@
     "lint": "eslint index.js test/**/*.js",
     "test": "gulp test",
     "pretest": "npm run lint",
-    "prepublish": "npm run lint && gulp minify",
+    "prepublish": "npm run lint && npm run build",
     "build": "gulp minify",
     "dev": "gulp watch"
   },
