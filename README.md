@@ -13,7 +13,7 @@ Route Player plugin for maptalks.js based on [VectorLayer](http://maptalks.org/m
 ## Install
   
 * Install with npm: ```npm install maptalks.routeplayer```. 
-* Download from [dist directory](https://github.com/maptalks/maptalks.routeplayer/tree/master/dist).
+* Download from [dist directory](https://github.com/maptalks/maptalks.routeplayer/tree/gh-pages/dist).
 * Use unpkg CDN: ```https://unpkg.com/maptalks.routeplayer/dist/maptalks.routeplayer.min.js```
 
 ## Usage
