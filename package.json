@@ -8,6 +8,8 @@
     "url": "https://github.com/maptalks/maptalks.routeplayer.git"
   },
   "main": "dist/maptalks.routeplayer.js",
+  "module" : "dist/maptalks.routeplayer.es.js",
+  "jsnext:main" : "dist/maptalks.routeplayer.es.js",
   "scripts": {
     "preversion": "npm test",
     "lint": "eslint index.js test/**/*.js",
