@@ -6,11 +6,7 @@
 /*!
  * requires maptalks@^0.23.0 
  */
-(function (global, factory) {
-	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('maptalks')) :
-	typeof define === 'function' && define.amd ? define(['exports', 'maptalks'], factory) :
-	(factory((global.maptalks = global.maptalks || {}),global.maptalks));
-}(this, (function (exports,maptalks) { 'use strict';
+import { Class, Coordinate, Eventable, INTERNAL_LAYER_PREFIX, LineString, Marker, Util, VectorLayer, animation } from 'maptalks';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
@@ -50,9 +46,9 @@ var Route = function () {
             r = span / (p2[2] - p1[2]);
         var x = p1[0] + (p2[0] - p1[0]) * r,
             y = p1[1] + (p2[1] - p1[1]) * r,
-            coord = new maptalks.Coordinate(x, y),
+            coord = new Coordinate(x, y),
             vp = map.coordinateToViewPoint(coord);
-        var degree = maptalks.Util.computeDegree(map.coordinateToViewPoint(new maptalks.Coordinate(p1)), vp);
+        var degree = Util.computeDegree(map.coordinateToViewPoint(new Coordinate(p1)), vp);
         return {
             'coordinate': coord,
             'viewPoint': vp,
@@ -121,7 +117,7 @@ var RoutePlayer = function (_maptalks$Eventable) {
         if (!Array.isArray(routes)) {
             routes = [routes];
         }
-        _this.id = maptalks.Util.UID();
+        _this.id = Util.UID();
         _this._map = map;
         _this._setup(routes);
         return _this;
@@ -289,7 +285,7 @@ var RoutePlayer = function (_maptalks$Eventable) {
             route._painter = {};
         }
         if (!route._painter.marker) {
-            var marker = new maptalks.Marker(coordinates.coordinate, {
+            var marker = new Marker(coordinates.coordinate, {
                 symbol: route.markerSymbol || this.options['markerSymbol']
             }).addTo(this.markerLayer);
             route._painter.marker = marker;
@@ -297,7 +293,7 @@ var RoutePlayer = function (_maptalks$Eventable) {
             route._painter.marker.setCoordinates(coordinates.coordinate);
         }
         if (!route._painter.line) {
-            var line = new maptalks.LineString(route.path, {
+            var line = new LineString(route.path, {
                 symbol: route.lineSymbol || this.options['lineSymbol']
             }).addTo(this.lineLayer);
 
@@ -338,7 +334,7 @@ var RoutePlayer = function (_maptalks$Eventable) {
                 renderer.callInFrameLoop(fn);
             };
         }
-        this.player = maptalks.animation.Animation.animate({
+        this.player = animation.Animation.animate({
             't': [this.played / this.duration, 1]
         }, {
             'framer': framer,
@@ -348,20 +344,15 @@ var RoutePlayer = function (_maptalks$Eventable) {
     };
 
     RoutePlayer.prototype._createLayers = function _createLayers() {
-        this.lineLayer = new maptalks.VectorLayer(maptalks.INTERNAL_LAYER_PREFIX + '_routeplay_r_' + this.id).addTo(this._map);
-        this.markerLayer = new maptalks.VectorLayer(maptalks.INTERNAL_LAYER_PREFIX + '_routeplay_m_' + this.id).addTo(this._map);
+        this.lineLayer = new VectorLayer(INTERNAL_LAYER_PREFIX + '_routeplay_r_' + this.id).addTo(this._map);
+        this.markerLayer = new VectorLayer(INTERNAL_LAYER_PREFIX + '_routeplay_m_' + this.id).addTo(this._map);
     };
 
     return RoutePlayer;
-}(maptalks.Eventable(maptalks.Class));
+}(Eventable(Class));
 
 RoutePlayer.mergeOptions(options);
 
-exports.Route = Route;
-exports.RoutePlayer = RoutePlayer;
-
-Object.defineProperty(exports, '__esModule', { value: true });
+export { Route, RoutePlayer };
 
 typeof console !== 'undefined' && console.log('maptalks.routeplayer v0.0.0, requires maptalks@^0.23.0.');
-
-})));
