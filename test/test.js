@@ -15,4 +15,8 @@ describe('GridLayer', function () {
         map.remove();
         maptalks.DomUtil.removeDomNode(container);
     });
+
+    it('ok', function () {
+
+    });
 });
