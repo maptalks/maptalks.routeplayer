@@ -1,5 +1,5 @@
 /*!
- * maptalks.routeplayer v0.0.0
+ * maptalks.routeplayer v0.1.0
  * LICENSE : MIT
  * (c) 2016-2018 maptalks.org
  */
@@ -362,6 +362,6 @@ exports.RoutePlayer = RoutePlayer;
 
 Object.defineProperty(exports, '__esModule', { value: true });
 
-typeof console !== 'undefined' && console.log('maptalks.routeplayer v0.0.0, requires maptalks@^0.23.0.');
+typeof console !== 'undefined' && console.log('maptalks.routeplayer v0.1.0, requires maptalks@^0.23.0.');
 
 })));
