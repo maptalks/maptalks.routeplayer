@@ -1,7 +1,7 @@
 /*!
  * maptalks.routeplayer v0.1.0
  * LICENSE : MIT
- * (c) 2016-2018 maptalks.org
+ * (c) 2016-2019 maptalks.org
  */
 /*!
  * requires maptalks@^0.23.0 

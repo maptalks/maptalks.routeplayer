@@ -8,8 +8,8 @@
     "url": "https://github.com/maptalks/maptalks.routeplayer.git"
   },
   "main": "dist/maptalks.routeplayer.js",
-  "module" : "dist/maptalks.routeplayer.es.js",
-  "jsnext:main" : "dist/maptalks.routeplayer.es.js",
+  "module": "dist/maptalks.routeplayer.es.js",
+  "jsnext:main": "dist/maptalks.routeplayer.es.js",
   "scripts": {
     "preversion": "npm test",
     "lint": "eslint index.js test/**/*.js",
@@ -41,10 +41,13 @@
     "maptalks": "^0.23.1",
     "maptalks-build-helpers": "^0.4.5",
     "minimist": "^1.2.0",
-    "mocha": "^2.4.5"
+    "mocha": "^2.4.5",
+    "natives": "^1.1.6"
   },
   "peerDependencies": {
     "maptalks": "^0.23.0"
   },
-  "dependencies": {}
+  "dependencies": {
+    "natives": "^1.1.6"
+  }
 }
