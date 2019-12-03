@@ -1,4 +1,4 @@
-import * as maptalks from "maptalks";
+import * as maptalks from 'maptalks';
 
 export class Route {
     constructor(r) {
@@ -85,7 +85,7 @@ const options = {
     markerSymbol: null,
     lineSymbol: {
         lineWidth: 2,
-        lineColor: "#004A8D"
+        lineColor: '#004A8D'
     }
 };
 
@@ -114,20 +114,20 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
     }
 
     play() {
-        if (this.player.playState === "running") {
+        if (this.player.playState === 'running') {
             return this;
         }
         this.player.play();
-        this.fire("playstart");
+        this.fire('playstart');
         return this;
     }
 
     pause() {
-        if (this.player.playState === "paused") {
+        if (this.player.playState === 'paused') {
             return this;
         }
         this.player.pause();
-        this.fire("playpause");
+        this.fire('playpause');
         return this;
     }
 
@@ -136,17 +136,17 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
         this.played = 0;
         this._createPlayer();
         this._step({ styles: { t: 0 } });
-        this.fire("playcancel");
+        this.fire('playcancel');
         return this;
     }
 
     finish() {
-        if (this.player.playState === "finished") {
+        if (this.player.playState === 'finished') {
             return this;
         }
         this.player.finish();
         this._step({ styles: { t: 1 } });
-        this.fire("playfinish");
+        this.fire('playfinish');
         return this;
     }
 
@@ -175,11 +175,11 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
     }
 
     getUnitTime() {
-        return this.options["unitTime"];
+        return this.options['unitTime'];
     }
 
     setUnitTime(ut) {
-        this.options["unitTime"] = +ut;
+        this.options['unitTime'] = +ut;
         this._resetPlayer();
     }
 
@@ -191,7 +191,7 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
             return null;
         }
 
-        return this.routes[index]._painter.marker.getProperties();;
+        return this.routes[index]._painter.marker.getProperties();
     }
 
     getCurrentCoordinates(index) {
@@ -233,7 +233,7 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
     }
 
     _resetPlayer() {
-        const playing = this.player && this.player.playState === "running";
+        const playing = this.player && this.player.playState === 'running';
         if (playing) {
             this.player.finish();
         }
@@ -244,9 +244,9 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
     }
 
     _step(frame) {
-        if (frame.state && frame.state.playState !== "running") {
-            if (frame.state.playState === "finished") {
-                this.fire("playfinish");
+        if (frame.state && frame.state.playState !== 'running') {
+            if (frame.state.playState === 'finished') {
+                this.fire('playfinish');
             }
             return;
         }
@@ -254,7 +254,7 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
         for (let i = 0, l = this.routes.length; i < l; i++) {
             this._drawRoute(this.routes[i], this.startTime + this.played);
         }
-        this.fire("playing");
+        this.fire('playing');
     }
 
     _drawRoute(route, t) {
@@ -275,7 +275,7 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
         }
         if (!route._painter.marker) {
             const marker = new maptalks.Marker(coordinates.coordinate, {
-                symbol: route.markerSymbol || this.options["markerSymbol"]
+                symbol: route.markerSymbol || this.options['markerSymbol']
             }).addTo(this.markerLayer);
             route._painter.marker = marker;
         } else {
@@ -284,7 +284,7 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
         }
         if (!route._painter.line) {
             const line = new maptalks.LineString(route.path, {
-                symbol: route.lineSymbol || this.options["lineSymbol"]
+                symbol: route.lineSymbol || this.options['lineSymbol']
             }).addTo(this.lineLayer);
 
             route._painter.line = line;
@@ -315,7 +315,7 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
 
     _createPlayer() {
         const duration =
-            (this.duration - this.played) / this.options["unitTime"];
+            (this.duration - this.played) / this.options['unitTime'];
         let framer;
         const renderer = this._map._getRenderer();
         if (renderer.callInFrameLoop) {
@@ -330,7 +330,7 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
             {
                 framer: framer,
                 speed: duration,
-                easing: "linear"
+                easing: 'linear'
             },
             this._step.bind(this)
         );
@@ -338,10 +338,10 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
 
     _createLayers() {
         this.lineLayer = new maptalks.VectorLayer(
-            maptalks.INTERNAL_LAYER_PREFIX + "_routeplay_r_" + this.id
+            maptalks.INTERNAL_LAYER_PREFIX + '_routeplay_r_' + this.id
         ).addTo(this._map);
         this.markerLayer = new maptalks.VectorLayer(
-            maptalks.INTERNAL_LAYER_PREFIX + "_routeplay_m_" + this.id
+            maptalks.INTERNAL_LAYER_PREFIX + '_routeplay_m_' + this.id
         ).addTo(this._map);
     }
 }

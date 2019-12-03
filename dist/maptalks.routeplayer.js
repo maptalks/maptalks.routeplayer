@@ -78,7 +78,7 @@ var Route = function () {
     };
 
     _createClass(Route, [{
-        key: "markerSymbol",
+        key: 'markerSymbol',
         get: function get() {
             return this.route.markerSymbol;
         },
@@ -89,7 +89,7 @@ var Route = function () {
             }
         }
     }, {
-        key: "lineSymbol",
+        key: 'lineSymbol',
         get: function get() {
             return this.route.lineSymbol;
         },
@@ -110,7 +110,7 @@ var options = {
     markerSymbol: null,
     lineSymbol: {
         lineWidth: 2,
-        lineColor: "#004A8D"
+        lineColor: '#004A8D'
     }
 };
 
@@ -145,20 +145,20 @@ var RoutePlayer = function (_maptalks$Eventable) {
     };
 
     RoutePlayer.prototype.play = function play() {
-        if (this.player.playState === "running") {
+        if (this.player.playState === 'running') {
             return this;
         }
         this.player.play();
-        this.fire("playstart");
+        this.fire('playstart');
         return this;
     };
 
     RoutePlayer.prototype.pause = function pause() {
-        if (this.player.playState === "paused") {
+        if (this.player.playState === 'paused') {
             return this;
         }
         this.player.pause();
-        this.fire("playpause");
+        this.fire('playpause');
         return this;
     };
 
@@ -167,17 +167,17 @@ var RoutePlayer = function (_maptalks$Eventable) {
         this.played = 0;
         this._createPlayer();
         this._step({ styles: { t: 0 } });
-        this.fire("playcancel");
+        this.fire('playcancel');
         return this;
     };
 
     RoutePlayer.prototype.finish = function finish() {
-        if (this.player.playState === "finished") {
+        if (this.player.playState === 'finished') {
             return this;
         }
         this.player.finish();
         this._step({ styles: { t: 1 } });
-        this.fire("playfinish");
+        this.fire('playfinish');
         return this;
     };
 
@@ -206,11 +206,11 @@ var RoutePlayer = function (_maptalks$Eventable) {
     };
 
     RoutePlayer.prototype.getUnitTime = function getUnitTime() {
-        return this.options["unitTime"];
+        return this.options['unitTime'];
     };
 
     RoutePlayer.prototype.setUnitTime = function setUnitTime(ut) {
-        this.options["unitTime"] = +ut;
+        this.options['unitTime'] = +ut;
         this._resetPlayer();
     };
 
@@ -264,7 +264,7 @@ var RoutePlayer = function (_maptalks$Eventable) {
     };
 
     RoutePlayer.prototype._resetPlayer = function _resetPlayer() {
-        var playing = this.player && this.player.playState === "running";
+        var playing = this.player && this.player.playState === 'running';
         if (playing) {
             this.player.finish();
         }
@@ -275,9 +275,9 @@ var RoutePlayer = function (_maptalks$Eventable) {
     };
 
     RoutePlayer.prototype._step = function _step(frame) {
-        if (frame.state && frame.state.playState !== "running") {
-            if (frame.state.playState === "finished") {
-                this.fire("playfinish");
+        if (frame.state && frame.state.playState !== 'running') {
+            if (frame.state.playState === 'finished') {
+                this.fire('playfinish');
             }
             return;
         }
@@ -285,7 +285,7 @@ var RoutePlayer = function (_maptalks$Eventable) {
         for (var i = 0, l = this.routes.length; i < l; i++) {
             this._drawRoute(this.routes[i], this.startTime + this.played);
         }
-        this.fire("playing");
+        this.fire('playing');
     };
 
     RoutePlayer.prototype._drawRoute = function _drawRoute(route, t) {
@@ -306,7 +306,7 @@ var RoutePlayer = function (_maptalks$Eventable) {
         }
         if (!route._painter.marker) {
             var marker = new maptalks.Marker(coordinates.coordinate, {
-                symbol: route.markerSymbol || this.options["markerSymbol"]
+                symbol: route.markerSymbol || this.options['markerSymbol']
             }).addTo(this.markerLayer);
             route._painter.marker = marker;
         } else {
@@ -315,7 +315,7 @@ var RoutePlayer = function (_maptalks$Eventable) {
         }
         if (!route._painter.line) {
             var line = new maptalks.LineString(route.path, {
-                symbol: route.lineSymbol || this.options["lineSymbol"]
+                symbol: route.lineSymbol || this.options['lineSymbol']
             }).addTo(this.lineLayer);
 
             route._painter.line = line;
@@ -347,7 +347,7 @@ var RoutePlayer = function (_maptalks$Eventable) {
     };
 
     RoutePlayer.prototype._createPlayer = function _createPlayer() {
-        var duration = (this.duration - this.played) / this.options["unitTime"];
+        var duration = (this.duration - this.played) / this.options['unitTime'];
         var framer = void 0;
         var renderer = this._map._getRenderer();
         if (renderer.callInFrameLoop) {
@@ -360,13 +360,13 @@ var RoutePlayer = function (_maptalks$Eventable) {
         }, {
             framer: framer,
             speed: duration,
-            easing: "linear"
+            easing: 'linear'
         }, this._step.bind(this));
     };
 
     RoutePlayer.prototype._createLayers = function _createLayers() {
-        this.lineLayer = new maptalks.VectorLayer(maptalks.INTERNAL_LAYER_PREFIX + "_routeplay_r_" + this.id).addTo(this._map);
-        this.markerLayer = new maptalks.VectorLayer(maptalks.INTERNAL_LAYER_PREFIX + "_routeplay_m_" + this.id).addTo(this._map);
+        this.lineLayer = new maptalks.VectorLayer(maptalks.INTERNAL_LAYER_PREFIX + '_routeplay_r_' + this.id).addTo(this._map);
+        this.markerLayer = new maptalks.VectorLayer(maptalks.INTERNAL_LAYER_PREFIX + '_routeplay_m_' + this.id).addTo(this._map);
     };
 
     return RoutePlayer;

@@ -57,8 +57,8 @@
                 },
                 baseLayer: new maptalks.TileLayer("base", {
                     urlTemplate:
-                        "http://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}.png",
-                    subdomains: ["a", "b", "c", "d", "e"]
+                        'http://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}.png',
+                    subdomains: ['a', 'b', 'c', 'd', 'e']
                 })
             });
 
@@ -69,7 +69,9 @@
                     player.getCurrentProperties(0) !== undefined &&
                     player.getCurrentProperties(0) !== null
                 ) {
-                    $("#info").text("current info: " + player.getCurrentProperties(0).info);
+                    $("#info").text(
+                        "current info: " + player.getCurrentProperties(0).info
+                    );
                 }
             });
 
