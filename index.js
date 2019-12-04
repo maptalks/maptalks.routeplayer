@@ -77,15 +77,35 @@ export class Route {
             this._painter.line.setSymbol(symbol);
         }
     }
+
+    get trailLineSymbol() {
+        return this.route.trailLineSymbol;
+    }
+
+    set trailLineSymbol(symbol) {
+        this.route.trailLineSymbol = symbol;
+        if (this._painter && this._painter.marker) {
+            this._painter.trailLine.setSymbol(symbol);
+        }
+    }
 }
 
 const options = {
     unitTime: 1 * 1000,
     showRoutes: true,
+    showTrail: true,
     markerSymbol: null,
     lineSymbol: {
         lineWidth: 2,
         lineColor: '#004A8D'
+    },
+    trailLineSymbol : {
+        lineColor: 'rgba(250,0,0,1)',
+        lineWidth: 4,
+        lineJoin: 'round', //miter, round, bevel
+        lineCap: 'round', //butt, round, square
+        lineDasharray: null, //dasharray, e.g. [10, 5, 5]
+        'lineOpacity ': 1
     }
 };
 
@@ -107,8 +127,10 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
         this.finish();
         this.markerLayer.remove();
         this.lineLayer.remove();
+        this.trailLineLayer.remove();
         delete this.markerLayer;
         delete this.lineLayer;
+        delete this.trailLineLayer;
         delete this._map;
         return this;
     }
@@ -289,6 +311,23 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
 
             route._painter.line = line;
         }
+
+        if (!route._painter.trailLine && this.options['showTrail']) {
+            const trailLine = new maptalks.LineString([], {
+                symbol: route.trailLineSymbol || this.options['trailLineSymbol']
+            }).addTo(this.trailLineLayer);
+            route._painter.trailLine = trailLine;
+        } else {
+            let ss = route.path.filter(item=>{
+                return item[2] <= t;
+            }).map(item=>{
+                return [item[0], item[1]];
+            });
+            console.log(ss);
+            if (ss.length > 1) {
+                route._painter.trailLine.setCoordinates(ss);
+            }
+        }
     }
 
     _setup(rs) {
@@ -339,6 +378,9 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
     _createLayers() {
         this.lineLayer = new maptalks.VectorLayer(
             maptalks.INTERNAL_LAYER_PREFIX + '_routeplay_r_' + this.id
+        ).addTo(this._map);
+        this.trailLineLayer = new maptalks.VectorLayer(
+            maptalks.INTERNAL_LAYER_PREFIX + '_routeplay_t_' + this.id
         ).addTo(this._map);
         this.markerLayer = new maptalks.VectorLayer(
             maptalks.INTERNAL_LAYER_PREFIX + '_routeplay_m_' + this.id
