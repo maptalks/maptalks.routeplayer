@@ -254,6 +254,22 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
         return this;
     }
 
+    showRoute() {
+        this.lineLayer.show();
+    }
+
+    showTrail() {
+        this.trailLineLayer.show();
+    }
+
+    hideRoute() {
+        this.lineLayer.hide();
+    }
+
+    hideTrail() {
+        this.trailLineLayer.hide();
+    }
+
     _resetPlayer() {
         const playing = this.player && this.player.playState === 'running';
         if (playing) {
@@ -304,7 +320,7 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
             route._painter.marker.setProperties(coordinates.payload);
             route._painter.marker.setCoordinates(coordinates.coordinate);
         }
-        if (!route._painter.line && this.options['showRoutes']) {
+        if (!route._painter.line) {
             const line = new maptalks.LineString(route.path, {
                 symbol: route.lineSymbol || this.options['lineSymbol']
             }).addTo(this.lineLayer);
@@ -312,20 +328,16 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
             route._painter.line = line;
         }
 
-        if (!route._painter.trailLine && this.options['showTrail']) {
+        if (!route._painter.trailLine) {
+            this.trailLinePoints = [coordinates.coordinate];
             const trailLine = new maptalks.LineString([], {
                 symbol: route.trailLineSymbol || this.options['trailLineSymbol']
             }).addTo(this.trailLineLayer);
             route._painter.trailLine = trailLine;
         } else {
-            let ss = route.path.filter(item=>{
-                return item[2] <= t;
-            }).map(item=>{
-                return [item[0], item[1]];
-            });
-            console.log(ss);
-            if (ss.length > 1) {
-                route._painter.trailLine.setCoordinates(ss);
+            this.trailLinePoints.push(coordinates.coordinate);
+            if (this.trailLinePoints.length > 1) {
+                route._painter.trailLine.setCoordinates(this.trailLinePoints);
             }
         }
     }
@@ -377,10 +389,10 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
 
     _createLayers() {
         this.lineLayer = new maptalks.VectorLayer(
-            maptalks.INTERNAL_LAYER_PREFIX + '_routeplay_r_' + this.id
+            maptalks.INTERNAL_LAYER_PREFIX + '_routeplay_r_' + this.id, [], { visible:this.options['showRoutes'], enableSimplify:false }
         ).addTo(this._map);
         this.trailLineLayer = new maptalks.VectorLayer(
-            maptalks.INTERNAL_LAYER_PREFIX + '_routeplay_t_' + this.id
+            maptalks.INTERNAL_LAYER_PREFIX + '_routeplay_t_' + this.id, [], { visible:this.options['showTrail'], enableSimplify:false }
         ).addTo(this._map);
         this.markerLayer = new maptalks.VectorLayer(
             maptalks.INTERNAL_LAYER_PREFIX + '_routeplay_m_' + this.id
