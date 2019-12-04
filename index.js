@@ -282,7 +282,7 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
             route._painter.marker.setProperties(coordinates.payload);
             route._painter.marker.setCoordinates(coordinates.coordinate);
         }
-        if (!route._painter.line) {
+        if (!route._painter.line && this.options['showRoutes']) {
             const line = new maptalks.LineString(route.path, {
                 symbol: route.lineSymbol || this.options['lineSymbol']
             }).addTo(this.lineLayer);

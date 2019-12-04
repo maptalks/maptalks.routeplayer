@@ -313,7 +313,7 @@ var RoutePlayer = function (_maptalks$Eventable) {
             route._painter.marker.setProperties(coordinates.payload);
             route._painter.marker.setCoordinates(coordinates.coordinate);
         }
-        if (!route._painter.line) {
+        if (!route._painter.line && this.options['showRoutes']) {
             var line = new maptalks.LineString(route.path, {
                 symbol: route.lineSymbol || this.options['lineSymbol']
             }).addTo(this.lineLayer);
