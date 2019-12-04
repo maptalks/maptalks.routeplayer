@@ -135,7 +135,7 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
         this.player.cancel();
         this.played = 0;
         this._createPlayer();
-        this._step({ styles: { t: 0 } });
+        this._step({ styles: { t: 0 }});
         this.fire('playcancel');
         return this;
     }
@@ -145,7 +145,7 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
             return this;
         }
         this.player.finish();
-        this._step({ styles: { t: 1 } });
+        this._step({ styles: { t: 1 }});
         this.fire('playfinish');
         return this;
     }
@@ -319,7 +319,7 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
         let framer;
         const renderer = this._map._getRenderer();
         if (renderer.callInFrameLoop) {
-            framer = function(fn) {
+            framer = function (fn) {
                 renderer.callInFrameLoop(fn);
             };
         }
