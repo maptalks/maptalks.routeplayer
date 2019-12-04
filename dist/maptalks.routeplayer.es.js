@@ -183,6 +183,9 @@ var RoutePlayer = function (_maptalks$Eventable) {
     RoutePlayer.prototype.cancel = function cancel() {
         this.player.cancel();
         this.played = 0;
+        this.trailLinePoints = [];
+        var line = this.trailLineLayer.getGeometries()[0];
+        line.setCoordinates(this.trailLinePoints);
         this._createPlayer();
         this._step({ styles: { t: 0 } });
         this.fire('playcancel');
@@ -193,6 +196,16 @@ var RoutePlayer = function (_maptalks$Eventable) {
         if (this.player.playState === 'finished') {
             return this;
         }
+
+        // complete trail line
+        var line = this.trailLineLayer.getGeometries()[0];
+        var coors = this.routes[0].path.map(function (item) {
+            return [item[0], item[1]];
+        });
+        this.trailLinePoints = coors;
+        console.log(coors);
+        line.setCoordinates(this.trailLinePoints);
+
         this.player.finish();
         this._step({ styles: { t: 1 } });
         this.fire('playfinish');
@@ -384,6 +397,7 @@ var RoutePlayer = function (_maptalks$Eventable) {
                 end = route.getEnd();
             }
         }
+        this.trailLinePoints = [];
         this.routes = routes;
         this.startTime = start;
         this.endTime = end;

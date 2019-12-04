@@ -45,16 +45,15 @@
             <a href="javascript:speed(1);">1X</a><br />
             <a href="javascript:speed(2);">2X</a><br />
             <a href="javascript:speed(4);">4X</a><br />
-            <span id="info">current info: </span>
+            <span id="info">current info: </span><br />
             <label>
                 <input type="checkbox" id="showRoute" checked />
-                showRoutes</label
-            >
-            <br />
+                showRoutes
+            </label><br />
             <label>
                 <input type="checkbox" id="showTrail" checked />
-                showTrail</label
-            >
+                showTrail
+            </label>
         </div>
         <script>
             var map = new maptalks.Map("map", {
@@ -102,7 +101,7 @@
                 }
             });
 
-            player.play();
+            // player.play();
 
             function play() {
                 player.play();

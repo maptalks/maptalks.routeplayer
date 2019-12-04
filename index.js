@@ -156,6 +156,9 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
     cancel() {
         this.player.cancel();
         this.played = 0;
+        this.trailLinePoints = [];
+        let line = this.trailLineLayer.getGeometries()[0];
+        line.setCoordinates(this.trailLinePoints);
         this._createPlayer();
         this._step({ styles: { t: 0 }});
         this.fire('playcancel');
@@ -166,6 +169,16 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
         if (this.player.playState === 'finished') {
             return this;
         }
+
+        // complete trail line
+        let line = this.trailLineLayer.getGeometries()[0];
+        let coors = this.routes[0].path.map(item=>{
+            return [item[0], item[1]];
+        });
+        this.trailLinePoints = coors;
+        console.log(coors);
+        line.setCoordinates(this.trailLinePoints);
+
         this.player.finish();
         this._step({ styles: { t: 1 }});
         this.fire('playfinish');
@@ -355,6 +368,7 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
                 end = route.getEnd();
             }
         }
+        this.trailLinePoints = [];
         this.routes = routes;
         this.startTime = start;
         this.endTime = end;
