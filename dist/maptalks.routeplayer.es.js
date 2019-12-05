@@ -185,7 +185,7 @@ var RoutePlayer = function (_maptalks$Eventable) {
         this.played = 0;
         this.trailLinePoints = [];
         var line = this.trailLineLayer.getGeometries()[0];
-        line.setCoordinates(this.trailLinePoints);
+        if (line !== undefined) line.setCoordinates(this.trailLinePoints);
         this._createPlayer();
         this._step({ styles: { t: 0 } });
         this.fire('playcancel');
@@ -203,7 +203,6 @@ var RoutePlayer = function (_maptalks$Eventable) {
             return [item[0], item[1]];
         });
         this.trailLinePoints = coors;
-        console.log(coors);
         line.setCoordinates(this.trailLinePoints);
 
         this.player.finish();

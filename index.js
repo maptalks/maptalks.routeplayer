@@ -158,7 +158,8 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
         this.played = 0;
         this.trailLinePoints = [];
         let line = this.trailLineLayer.getGeometries()[0];
-        line.setCoordinates(this.trailLinePoints);
+        if (line !== undefined)
+            line.setCoordinates(this.trailLinePoints);
         this._createPlayer();
         this._step({ styles: { t: 0 }});
         this.fire('playcancel');
@@ -176,7 +177,6 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
             return [item[0], item[1]];
         });
         this.trailLinePoints = coors;
-        console.log(coors);
         line.setCoordinates(this.trailLinePoints);
 
         this.player.finish();
