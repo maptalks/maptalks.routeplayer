@@ -1,72 +1,101 @@
 <!DOCTYPE html>
 <html>
-<head>
-    <meta charset="UTF-8" />
-    <title>maptalks.heat demo</title>
-    <script src="https://unpkg.com/maptalks@<2.0.0/dist/maptalks.min.js"></script>
-    <script src="../dist/maptalks.routeplayer.js"></script>
-    <link type="text/css" rel="stylesheet" href="https://unpkg.com/maptalks@<2.0.0/dist/maptalks.css">
-    <script src="route.js"></script>
-    <style>
-        html,body{
-            margin:0px;
-            height:100%;
-            width: 100%;
-         }
-        #map { width: 90%; height: 100%;  float:left;}
-        #control { width: 10%; height: 100%; float:right;}
-        a { color: #0077ff; }
-    </style>
-</head>
-<body>
-<div id="map"></div>
-<div id="control">
-<a href="javascript:play();">Play</a><br>
-<a href="javascript:pause();">Pause</a><br>
-<a href="javascript:cancel();">Cancel</a><br>
-<a href="javascript:finish();">Finish</a><br>
-<a href="javascript:speed(0.5);">0.5X</a><br>
-<a href="javascript:speed(1);">1X</a><br>
-<a href="javascript:speed(2);">2X</a><br>
-<a href="javascript:speed(4);">4X</a><br>
-</div>
-<script>
+    <head>
+        <meta charset="UTF-8" />
+        <title>maptalks.heat demo</title>
+        <script src="https://unpkg.com/jquery@<3.3.1/dist/jquery.min.js"></script>
+        <script src="https://unpkg.com/maptalks@<2.0.0/dist/maptalks.min.js"></script>
+        <script src="../dist/maptalks.routeplayer.js"></script>
+        <link
+            type="text/css"
+            rel="stylesheet"
+            href="https://unpkg.com/maptalks@<2.0.0/dist/maptalks.css"
+        />
+        <script src="route.js"></script>
+        <style>
+            html,
+            body {
+                margin: 0px;
+                height: 100%;
+                width: 100%;
+            }
+            #map {
+                width: 90%;
+                height: 100%;
+                float: left;
+            }
+            #control {
+                width: 10%;
+                height: 100%;
+                float: right;
+            }
+            a {
+                color: #0077ff;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="map"></div>
+        <div id="control">
+            <a href="javascript:play();">Play</a><br />
+            <a href="javascript:pause();">Pause</a><br />
+            <a href="javascript:cancel();">Cancel</a><br />
+            <a href="javascript:finish();">Finish</a><br />
+            <a href="javascript:speed(0.5);">0.5X</a><br />
+            <a href="javascript:speed(1);">1X</a><br />
+            <a href="javascript:speed(2);">2X</a><br />
+            <a href="javascript:speed(4);">4X</a><br />
+            <span id="info">current info: </span>
+        </div>
+        <script>
+            var map = new maptalks.Map("map", {
+                center: [121.505, 31.2611],
+                zoom: 14,
+                attributionControl: {
+                    content:
+                        '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, &copy; <a href="https://carto.com/attributions">CARTO</a>'
+                },
+                baseLayer: new maptalks.TileLayer("base", {
+                    urlTemplate:
+                        'http://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}.png',
+                    subdomains: ['a', 'b', 'c', 'd', 'e']
+                })
+            });
 
-var map = new maptalks.Map("map",{
-    center:      [121.5050,31.2611],
-    zoom:  14,
-    attributionControl : {
-        'content' : '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, &copy; <a href="https://carto.com/attributions">CARTO</a>'
-    },
-    baseLayer : new maptalks.TileLayer("base",{
-        'urlTemplate' : 'http://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}.png',
-        'subdomains'  : ['a','b','c','d','e']
-    })
-});
-var player = new maptalks.RoutePlayer(route, map);
-var unitTime = player.getUnitTime();
-player.play();
+            var player = new maptalks.RoutePlayer(route, map);
+            var unitTime = player.getUnitTime();
+            player.on("playing", function(param) {
+                if (
+                    player.getCurrentProperties(0) !== undefined &&
+                    player.getCurrentProperties(0) !== null
+                ) {
+                    $("#info").text(
+                        "current info: " + player.getCurrentProperties(0).info
+                    );
+                }
+            });
 
-function play() {
-    player.play();
-}
+            player.play();
 
-function pause() {
-    player.pause();
-}
+            function play() {
+                player.play();
+            }
 
-function finish() {
-    player.finish();
-}
+            function pause() {
+                player.pause();
+            }
 
-function cancel() {
-    player.cancel();
-}
+            function finish() {
+                player.finish();
+            }
 
-function speed(t) {
-    player.setUnitTime(unitTime * t);
-}
+            function cancel() {
+                player.cancel();
+            }
 
-</script>
-</body>
+            function speed(t) {
+                player.setUnitTime(unitTime * t);
+            }
+        </script>
+    </body>
 </html>

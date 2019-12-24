@@ -1,7 +1,7 @@
 /*!
  * maptalks.routeplayer v0.1.0
  * LICENSE : MIT
- * (c) 2016-2018 maptalks.org
+ * (c) 2016-2019 maptalks.org
  */
 /*!
  * requires maptalks@^0.23.0 
@@ -35,15 +35,18 @@ var Route = function () {
             return null;
         }
         var idx = null;
+        var payload = null;
         for (var i = 0, l = this.path.length; i < l; i++) {
             if (t < this.path[i][2]) {
                 idx = i;
+                payload = this.path[i][3];
                 break;
             }
         }
         if (idx === null) {
             idx = this.path.length - 1;
         }
+
         var p1 = this.path[idx - 1],
             p2 = this.path[idx],
             span = t - p1[2],
@@ -54,10 +57,11 @@ var Route = function () {
             vp = map.coordinateToViewPoint(coord);
         var degree = maptalks.Util.computeDegree(map.coordinateToViewPoint(new maptalks.Coordinate(p1)), vp);
         return {
-            'coordinate': coord,
-            'viewPoint': vp,
-            'degree': degree,
-            'index': idx
+            coordinate: coord,
+            viewPoint: vp,
+            degree: degree,
+            index: idx,
+            payload: payload
         };
     };
 
@@ -101,12 +105,12 @@ var Route = function () {
 }();
 
 var options = {
-    'unitTime': 1 * 1000,
-    'showRoutes': true,
-    'markerSymbol': null,
-    'lineSymbol': {
-        'lineWidth': 2,
-        'lineColor': '#004A8D'
+    unitTime: 1 * 1000,
+    showRoutes: true,
+    markerSymbol: null,
+    lineSymbol: {
+        lineWidth: 2,
+        lineColor: '#004A8D'
     }
 };
 
@@ -162,7 +166,7 @@ var RoutePlayer = function (_maptalks$Eventable) {
         this.player.cancel();
         this.played = 0;
         this._createPlayer();
-        this._step({ 'styles': { 't': 0 } });
+        this._step({ styles: { t: 0 } });
         this.fire('playcancel');
         return this;
     };
@@ -172,7 +176,7 @@ var RoutePlayer = function (_maptalks$Eventable) {
             return this;
         }
         this.player.finish();
-        this._step({ 'styles': { 't': 1 } });
+        this._step({ styles: { t: 1 } });
         this.fire('playfinish');
         return this;
     };
@@ -208,6 +212,17 @@ var RoutePlayer = function (_maptalks$Eventable) {
     RoutePlayer.prototype.setUnitTime = function setUnitTime(ut) {
         this.options['unitTime'] = +ut;
         this._resetPlayer();
+    };
+
+    RoutePlayer.prototype.getCurrentProperties = function getCurrentProperties(index) {
+        if (!index) {
+            index = 0;
+        }
+        if (!this.routes[index] || !this.routes[index]._painter) {
+            return null;
+        }
+
+        return this.routes[index]._painter.marker.getProperties();
     };
 
     RoutePlayer.prototype.getCurrentCoordinates = function getCurrentCoordinates(index) {
@@ -278,6 +293,7 @@ var RoutePlayer = function (_maptalks$Eventable) {
             return;
         }
         var coordinates = route.getCoordinates(t, this._map);
+
         if (!coordinates) {
             if (route._painter && route._painter.marker) {
                 route._painter.marker.remove();
@@ -294,6 +310,7 @@ var RoutePlayer = function (_maptalks$Eventable) {
             }).addTo(this.markerLayer);
             route._painter.marker = marker;
         } else {
+            route._painter.marker.setProperties(coordinates.payload);
             route._painter.marker.setCoordinates(coordinates.coordinate);
         }
         if (!route._painter.line) {
@@ -339,11 +356,11 @@ var RoutePlayer = function (_maptalks$Eventable) {
             };
         }
         this.player = maptalks.animation.Animation.animate({
-            't': [this.played / this.duration, 1]
+            t: [this.played / this.duration, 1]
         }, {
-            'framer': framer,
-            'speed': duration,
-            'easing': 'linear'
+            framer: framer,
+            speed: duration,
+            easing: 'linear'
         }, this._step.bind(this));
     };
 
