@@ -45,7 +45,15 @@
             <a href="javascript:speed(1);">1X</a><br />
             <a href="javascript:speed(2);">2X</a><br />
             <a href="javascript:speed(4);">4X</a><br />
-            <span id="info">current info: </span>
+            <span id="info">current info: </span><br />
+            <label>
+                <input type="checkbox" id="showRoute" checked />
+                showRoutes
+            </label><br />
+            <label>
+                <input type="checkbox" id="showTrail" checked />
+                showTrail
+            </label>
         </div>
         <script>
             var map = new maptalks.Map("map", {
@@ -57,8 +65,8 @@
                 },
                 baseLayer: new maptalks.TileLayer("base", {
                     urlTemplate:
-                        'http://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}.png',
-                    subdomains: ['a', 'b', 'c', 'd', 'e']
+                        "http://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}.png",
+                    subdomains: ["a", "b", "c", "d", "e"]
                 })
             });
 
@@ -75,7 +83,25 @@
                 }
             });
 
-            player.play();
+            $("#showRoute").change(function() {
+                var flag = $(this).is(":checked");
+                if (flag) {
+                    player.showRoute();
+                } else {
+                    player.hideRoute();
+                }
+            });
+
+            $("#showTrail").change(function() {
+                var flag = $(this).is(":checked");
+                if (flag) {
+                    player.showTrail();
+                } else {
+                    player.hideTrail();
+                }
+            });
+
+            // player.play();
 
             function play() {
                 player.play();
