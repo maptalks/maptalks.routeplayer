@@ -99,6 +99,17 @@ var Route = function () {
                 this._painter.line.setSymbol(symbol);
             }
         }
+    }, {
+        key: 'trailLineSymbol',
+        get: function get() {
+            return this.route.trailLineSymbol;
+        },
+        set: function set(symbol) {
+            this.route.trailLineSymbol = symbol;
+            if (this._painter && this._painter.marker) {
+                this._painter.trailLine.setSymbol(symbol);
+            }
+        }
     }]);
 
     return Route;
@@ -107,10 +118,19 @@ var Route = function () {
 var options = {
     unitTime: 1 * 1000,
     showRoutes: true,
+    showTrail: true,
     markerSymbol: null,
     lineSymbol: {
         lineWidth: 2,
         lineColor: '#004A8D'
+    },
+    trailLineSymbol: {
+        lineColor: 'rgba(250,0,0,1)',
+        lineWidth: 4,
+        lineJoin: 'round', //miter, round, bevel
+        lineCap: 'round', //butt, round, square
+        lineDasharray: null, //dasharray, e.g. [10, 5, 5]
+        'lineOpacity ': 1
     }
 };
 
@@ -138,8 +158,10 @@ var RoutePlayer = function (_maptalks$Eventable) {
         this.finish();
         this.markerLayer.remove();
         this.lineLayer.remove();
+        this.trailLineLayer.remove();
         delete this.markerLayer;
         delete this.lineLayer;
+        delete this.trailLineLayer;
         delete this._map;
         return this;
     };
@@ -165,6 +187,9 @@ var RoutePlayer = function (_maptalks$Eventable) {
     RoutePlayer.prototype.cancel = function cancel() {
         this.player.cancel();
         this.played = 0;
+        this.trailLinePoints = [];
+        var line = this.trailLineLayer.getGeometries()[0];
+        if (line !== undefined) line.setCoordinates(this.trailLinePoints);
         this._createPlayer();
         this._step({ styles: { t: 0 } });
         this.fire('playcancel');
@@ -175,6 +200,15 @@ var RoutePlayer = function (_maptalks$Eventable) {
         if (this.player.playState === 'finished') {
             return this;
         }
+
+        // complete trail line
+        var line = this.trailLineLayer.getGeometries()[0];
+        var coors = this.routes[0].path.map(function (item) {
+            return [item[0], item[1]];
+        });
+        this.trailLinePoints = coors;
+        line.setCoordinates(this.trailLinePoints);
+
         this.player.finish();
         this._step({ styles: { t: 1 } });
         this.fire('playfinish');
@@ -263,6 +297,22 @@ var RoutePlayer = function (_maptalks$Eventable) {
         return this;
     };
 
+    RoutePlayer.prototype.showRoute = function showRoute() {
+        this.lineLayer.show();
+    };
+
+    RoutePlayer.prototype.showTrail = function showTrail() {
+        this.trailLineLayer.show();
+    };
+
+    RoutePlayer.prototype.hideRoute = function hideRoute() {
+        this.lineLayer.hide();
+    };
+
+    RoutePlayer.prototype.hideTrail = function hideTrail() {
+        this.trailLineLayer.hide();
+    };
+
     RoutePlayer.prototype._resetPlayer = function _resetPlayer() {
         var playing = this.player && this.player.playState === 'running';
         if (playing) {
@@ -320,6 +370,19 @@ var RoutePlayer = function (_maptalks$Eventable) {
 
             route._painter.line = line;
         }
+
+        if (!route._painter.trailLine) {
+            this.trailLinePoints = [coordinates.coordinate];
+            var trailLine = new maptalks.LineString([], {
+                symbol: route.trailLineSymbol || this.options['trailLineSymbol']
+            }).addTo(this.trailLineLayer);
+            route._painter.trailLine = trailLine;
+        } else {
+            this.trailLinePoints.push(coordinates.coordinate);
+            if (this.trailLinePoints.length > 1) {
+                route._painter.trailLine.setCoordinates(this.trailLinePoints);
+            }
+        }
     };
 
     RoutePlayer.prototype._setup = function _setup(rs) {
@@ -337,6 +400,7 @@ var RoutePlayer = function (_maptalks$Eventable) {
                 end = route.getEnd();
             }
         }
+        this.trailLinePoints = [];
         this.routes = routes;
         this.startTime = start;
         this.endTime = end;
@@ -365,7 +429,8 @@ var RoutePlayer = function (_maptalks$Eventable) {
     };
 
     RoutePlayer.prototype._createLayers = function _createLayers() {
-        this.lineLayer = new maptalks.VectorLayer(maptalks.INTERNAL_LAYER_PREFIX + '_routeplay_r_' + this.id).addTo(this._map);
+        this.lineLayer = new maptalks.VectorLayer(maptalks.INTERNAL_LAYER_PREFIX + '_routeplay_r_' + this.id, [], { visible: this.options['showRoutes'], enableSimplify: false }).addTo(this._map);
+        this.trailLineLayer = new maptalks.VectorLayer(maptalks.INTERNAL_LAYER_PREFIX + '_routeplay_t_' + this.id, [], { visible: this.options['showTrail'], enableSimplify: false }).addTo(this._map);
         this.markerLayer = new maptalks.VectorLayer(maptalks.INTERNAL_LAYER_PREFIX + '_routeplay_m_' + this.id).addTo(this._map);
     };
 
