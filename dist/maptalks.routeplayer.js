@@ -1,10 +1,10 @@
 /*!
  * maptalks.routeplayer v0.1.0
  * LICENSE : MIT
- * (c) 2016-2019 maptalks.org
+ * (c) 2016-2020 maptalks.org
  */
 /*!
- * requires maptalks@^0.23.0 
+ * requires maptalks@<2.0.0 
  */
 (function (global, factory) {
 	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('maptalks')) :
@@ -22,6 +22,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
+var markerRotation = [0, 0, 0];
 var Route = function () {
     function Route(r) {
         _classCallCheck(this, Route);
@@ -54,8 +55,9 @@ var Route = function () {
         var x = p1[0] + (p2[0] - p1[0]) * r,
             y = p1[1] + (p2[1] - p1[1]) * r,
             coord = new maptalks.Coordinate(x, y),
+            cp1 = map.coordinateToViewPoint(new maptalks.Coordinate(p1)),
             vp = map.coordinateToViewPoint(coord);
-        var degree = maptalks.Util.computeDegree(map.coordinateToViewPoint(new maptalks.Coordinate(p1)), vp);
+        var degree = 180 * maptalks.Util.computeDegree(cp1.x, -cp1.y, vp.x, -vp.y) / Math.PI;
         return {
             coordinate: coord,
             viewPoint: vp,
@@ -72,6 +74,9 @@ var Route = function () {
     Route.prototype.getEnd = function getEnd() {
         return this.path[this.getCount() - 1][2];
     };
+    //github return this.path[this.getCount() - 1][2];
+    //maptalks.routeplayer@0.1.0 requires a peer of @maptalks/vt.basic@^
+
 
     Route.prototype.getCount = function getCount() {
         return this.path.length;
@@ -128,6 +133,7 @@ var RoutePlayer = function (_maptalks$Eventable) {
         _this.id = maptalks.Util.UID();
         _this._map = map;
         _this._setup(routes);
+        _this._markerRotation = opts['markerSymbol'] && opts['markerSymbol']['rotation'] || [0, 0, 0];
         return _this;
     }
 
@@ -282,15 +288,16 @@ var RoutePlayer = function (_maptalks$Eventable) {
             return;
         }
         this.played = this.duration * frame.styles.t;
+        var coordinates = null;
         for (var i = 0, l = this.routes.length; i < l; i++) {
-            this._drawRoute(this.routes[i], this.startTime + this.played);
+            coordinates = this._drawRoute(this.routes[i], this.startTime + this.played);
         }
-        this.fire('playing');
+        this.fire('playing', { coordinates: coordinates });
     };
 
     RoutePlayer.prototype._drawRoute = function _drawRoute(route, t) {
         if (!this._map) {
-            return;
+            return null;
         }
         var coordinates = route.getCoordinates(t, this._map);
 
@@ -299,13 +306,13 @@ var RoutePlayer = function (_maptalks$Eventable) {
                 route._painter.marker.remove();
                 delete route._painter.marker;
             }
-            return;
+            return null;
         }
         if (!route._painter) {
             route._painter = {};
         }
         if (!route._painter.marker) {
-            var marker = new maptalks.Marker(coordinates.coordinate, {
+            var marker = new maptalks.GLTFMarker(coordinates.coordinate, {
                 symbol: route.markerSymbol || this.options['markerSymbol']
             }).addTo(this.markerLayer);
             route._painter.marker = marker;
@@ -320,6 +327,11 @@ var RoutePlayer = function (_maptalks$Eventable) {
 
             route._painter.line = line;
         }
+        markerRotation[0] = this._markerRotation[0];
+        markerRotation[1] = this._markerRotation[1];
+        markerRotation[2] = this._markerRotation[2] + coordinates.degree;
+        route._painter.marker.setRotation(markerRotation[0], markerRotation[1], markerRotation[2]);
+        return coordinates;
     };
 
     RoutePlayer.prototype._setup = function _setup(rs) {
@@ -365,8 +377,10 @@ var RoutePlayer = function (_maptalks$Eventable) {
     };
 
     RoutePlayer.prototype._createLayers = function _createLayers() {
-        this.lineLayer = new maptalks.VectorLayer(maptalks.INTERNAL_LAYER_PREFIX + '_routeplay_r_' + this.id).addTo(this._map);
-        this.markerLayer = new maptalks.VectorLayer(maptalks.INTERNAL_LAYER_PREFIX + '_routeplay_m_' + this.id).addTo(this._map);
+        this.lineLayer = new maptalks.LineStringLayer(maptalks.INTERNAL_LAYER_PREFIX + '_routeplay_r_' + this.id).addTo(this._map);
+        this.markerLayer = new maptalks.GLTFLayer(maptalks.INTERNAL_LAYER_PREFIX + '_routeplay_m_' + this.id, {
+            fitSize: this.options['layerOptions'] && this.options['layerOptions']['fitSize'] || 30
+        }).addTo(this._map);
     };
 
     return RoutePlayer;
@@ -379,6 +393,6 @@ exports.RoutePlayer = RoutePlayer;
 
 Object.defineProperty(exports, '__esModule', { value: true });
 
-typeof console !== 'undefined' && console.log('maptalks.routeplayer v0.1.0, requires maptalks@^0.23.0.');
+typeof console !== 'undefined' && console.log('maptalks.routeplayer v0.1.0, requires maptalks@<2.0.0.');
 
 })));

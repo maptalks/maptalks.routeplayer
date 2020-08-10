@@ -4,7 +4,12 @@
         <meta charset="UTF-8" />
         <title>maptalks.heat demo</title>
         <script src="https://unpkg.com/jquery@<3.3.1/dist/jquery.min.js"></script>
-        <script src="https://unpkg.com/maptalks@<2.0.0/dist/maptalks.min.js"></script>
+        <script src="https://unpkg.com/maptalks@1.0.0-alpha.9/dist/maptalks.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@maptalks/gl/dist/maptalksgl.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@maptalks/vt/dist/maptalks.vt.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@maptalks/gltf-layer/dist/maptalks.gltf.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@maptalks/vt.basic/dist/maptalks.vt.basic.js"></script>
+
         <script src="../dist/maptalks.routeplayer.js"></script>
         <link
             type="text/css"
@@ -50,7 +55,7 @@
         <script>
             var map = new maptalks.Map("map", {
                 center: [121.505, 31.2611],
-                zoom: 14,
+                zoom: 15,
                 attributionControl: {
                     content:
                         '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, &copy; <a href="https://carto.com/attributions">CARTO</a>'
@@ -61,8 +66,24 @@
                     subdomains: ['a', 'b', 'c', 'd', 'e']
                 })
             });
+            var count = 0;
+            var testRoutes = [];
+            map.on('click', e => {
+                if (count < 20) {
+                    testRoutes.push([e.coordinate.x, e.coordinate.y, 9721000 + count * 200000, { info: '111'}]);
+                } else {
+                    console.log(testRoutes);
+                }
+                count++;
+            });
 
-            var player = new maptalks.RoutePlayer(route, map);
+            var player = new maptalks.RoutePlayer(route1, map, {
+                markerSymbol: {
+                    url: 'gltf/moto/moto.gltf',
+                    scale: [1, 1, 1],
+                    rotation: [90, 0, 90]
+                }
+            });
             var unitTime = player.getUnitTime();
             player.on("playing", function(param) {
                 if (

@@ -1,5 +1,6 @@
 import * as maptalks from 'maptalks';
 
+const markerRotation = [0, 0, 0];
 export class Route {
     constructor(r) {
         this.route = r;
@@ -30,11 +31,9 @@ export class Route {
         const x = p1[0] + (p2[0] - p1[0]) * r,
             y = p1[1] + (p2[1] - p1[1]) * r,
             coord = new maptalks.Coordinate(x, y),
+            cp1 = map.coordinateToViewPoint(new maptalks.Coordinate(p1)),
             vp = map.coordinateToViewPoint(coord);
-        const degree = maptalks.Util.computeDegree(
-            map.coordinateToViewPoint(new maptalks.Coordinate(p1)),
-            vp
-        );
+        const degree = 180 * maptalks.Util.computeDegree(cp1.x, -cp1.y, vp.x, -vp.y) / Math.PI;
         return {
             coordinate: coord,
             viewPoint: vp,
@@ -51,7 +50,8 @@ export class Route {
     getEnd() {
         return this.path[this.getCount() - 1][2];
     }
-
+    //github return this.path[this.getCount() - 1][2];
+    //maptalks.routeplayer@0.1.0 requires a peer of @maptalks/vt.basic@^
     getCount() {
         return this.path.length;
     }
@@ -98,6 +98,7 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
         this.id = maptalks.Util.UID();
         this._map = map;
         this._setup(routes);
+        this._markerRotation = (opts['markerSymbol'] && opts['markerSymbol']['rotation']) || [0, 0, 0];
     }
 
     remove() {
@@ -251,15 +252,16 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
             return;
         }
         this.played = this.duration * frame.styles.t;
+        let coordinates = null;
         for (let i = 0, l = this.routes.length; i < l; i++) {
-            this._drawRoute(this.routes[i], this.startTime + this.played);
+            coordinates = this._drawRoute(this.routes[i], this.startTime + this.played);
         }
-        this.fire('playing');
+        this.fire('playing', { coordinates });
     }
 
     _drawRoute(route, t) {
         if (!this._map) {
-            return;
+            return null;
         }
         const coordinates = route.getCoordinates(t, this._map);
 
@@ -268,13 +270,13 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
                 route._painter.marker.remove();
                 delete route._painter.marker;
             }
-            return;
+            return null;
         }
         if (!route._painter) {
             route._painter = {};
         }
         if (!route._painter.marker) {
-            const marker = new maptalks.Marker(coordinates.coordinate, {
+            const marker = new maptalks.GLTFMarker(coordinates.coordinate, {
                 symbol: route.markerSymbol || this.options['markerSymbol']
             }).addTo(this.markerLayer);
             route._painter.marker = marker;
@@ -289,6 +291,11 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
 
             route._painter.line = line;
         }
+        markerRotation[0] = this._markerRotation[0];
+        markerRotation[1] = this._markerRotation[1];
+        markerRotation[2] = this._markerRotation[2] + coordinates.degree;
+        route._painter.marker.setRotation(markerRotation[0], markerRotation[1], markerRotation[2]);
+        return coordinates;
     }
 
     _setup(rs) {
@@ -337,11 +344,14 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
     }
 
     _createLayers() {
-        this.lineLayer = new maptalks.VectorLayer(
+        this.lineLayer = new maptalks.LineStringLayer(
             maptalks.INTERNAL_LAYER_PREFIX + '_routeplay_r_' + this.id
         ).addTo(this._map);
-        this.markerLayer = new maptalks.VectorLayer(
-            maptalks.INTERNAL_LAYER_PREFIX + '_routeplay_m_' + this.id
+        this.markerLayer = new maptalks.GLTFLayer(
+            maptalks.INTERNAL_LAYER_PREFIX + '_routeplay_m_' + this.id,
+            {
+                fitSize: (this.options['layerOptions'] && this.options['layerOptions']['fitSize']) || 30
+            }
         ).addTo(this._map);
     }
 }

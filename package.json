@@ -45,7 +45,10 @@
     "natives": "^1.1.6"
   },
   "peerDependencies": {
-    "maptalks": "^0.23.0"
+    "maptalks": "<2.0.0",
+    "@maptalks/vt.basic": "^<2.0.0",
+    "@maptalks/vt": "^<2.0.0",
+    "@maptalks/gltf-layer": "<2.0.0"
   },
   "dependencies": {
     "natives": "^1.1.6"
