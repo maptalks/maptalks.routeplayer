@@ -2,13 +2,16 @@
 
 [![NPM Version](https://img.shields.io/npm/v/maptalks.routeplayer.svg)](https://github.com/maptalks/maptalks.routeplayer)
 
-Route Player plugin for maptalks.js based on [VectorLayer](http://maptalks.org/maptalks.js/api/0.x/VectorLayer.html).
+Route Player plugin for maptalks.js.
 
 ![screenshot](https://user-images.githubusercontent.com/13678919/45591786-16929580-b98e-11e8-95fe-83ee73a15d1b.png)
 
 ## Examples
 
 * [Route play](https://maptalks.github.io/maptalks.routeplayer/demo/).
+* [Route play with gltf model](https://maptalks.github.io/maptalks.routeplayer/demo/gltfMarker.html)
+* [render by canvas](https://maptalks.github.io/maptalks.routeplayer/demo/RenderWithCanvas.html)
+* [render by webgl](https://maptalks.github.io/maptalks.routeplayer/demo/RenderWithWebgl.html)
 
 ## Install
   
@@ -36,6 +39,7 @@ var route = [
         "lineSymbol" : { lineColor : '#f00' }
     }
 ];
+
 var player = new maptalks.RoutePlayer(route, map);
 player.play();
 </script>
@@ -54,6 +58,12 @@ new maptalks.RoutePlayer(route, map)
 * options **Object** options
     * unitTime **Number** unit time for 1ms in player, default is 1000ms
     * showRoutes **Boolean** Whether to show routes during playing
+    * renderer **String** render mode, value is 'canvas' or 'gl', 'gl' default
+    * markerType **String** specify marker's type, value is 'marker' or 'gltf', 'marker' default
+    * markerSymbol **Object** marker's symbol object
+    * lineSymbol **Object** route line's symbol Object 
+    * trailLineSymbol **Object** trail line's symbol Object
+    * groupgllayer **maptalks.GroupGLLayer** set a groupgllayer to render the routes, when specifying a groupgllayer, the render mode must be 'gl'
 
 ### `remove()`
 
@@ -178,22 +188,22 @@ $ npm install
 
 * Watch source changes and generate runnable bundle repeatedly
 ```shell
-$ gulp watch
-```
-
-* Tests
-```shell
-$ npm test
-```
-
-* Watch source changes and run tests repeatedly
-```shell
-$ gulp tdd
+$ npm run dev
 ```
 
 * Package and generate minified bundles to dist directory
 ```shell
-$ gulp minify
+$ npm run build
+```
+
+* Tests
+```shell
+$ npm run test
+```
+
+* Watch source changes and run tests repeatedly
+```shell
+$ npm run tdd
 ```
 
 * Lint

@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8" />
+        <title>canvas绘制</title>
+        <script src="https://unpkg.com/jquery@<3.3.1/dist/jquery.min.js"></script>
+        <script src="stat.min.js"></script>
+        <script src="https://unpkg.com/maptalks@<2.0.0/dist/maptalks.min.js"></script>
+        <script src="../dist/maptalks.routeplayer.js"></script>
+        <link
+            type="text/css"
+            rel="stylesheet"
+            href="https://unpkg.com/maptalks@<2.0.0/dist/maptalks.css"
+        />
+        <script src="route.js"></script>
+        <style>
+            html,
+            body {
+                margin: 0px;
+                height: 100%;
+                width: 100%;
+            }
+            #map {
+                width: 90%;
+                height: 100%;
+                float: left;
+            }
+            #control {
+                width: 10%;
+                height: 100%;
+                float: right;
+            }
+            a {
+                color: #0077ff;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="map"></div>
+        <div id="control">
+            <a href="javascript:play();">Play</a><br />
+            <a href="javascript:pause();">Pause</a><br />
+            <a href="javascript:cancel();">Cancel</a><br />
+            <a href="javascript:finish();">Finish</a><br />
+            <a href="javascript:speed(0.5);">0.5X</a><br />
+            <a href="javascript:speed(1);">1X</a><br />
+            <a href="javascript:speed(2);">2X</a><br />
+            <a href="javascript:speed(4);">4X</a><br />
+            <span id="info">current info: </span><br />
+            <label>
+                <input type="checkbox" id="showRoute" checked />
+                showRoutes
+            </label><br />
+            <label>
+                <input type="checkbox" id="showTrail" checked />
+                showTrail
+            </label>
+        </div>
+        <script>
+            var map = new maptalks.Map("map", {
+                center: [116.40496063446926, 39.911371516938146],
+                zoom: 13,
+                pitch: 52.4,
+                bearing: -13.2,
+                lights: {
+                    ambient: {
+                        color: [0.1, 0.1, 0.1]
+                    },
+                    directional: {
+                        color: [1, 1, 1],
+                        direction: [1, 0, -1],
+                    }
+                },
+                baseLayer: new maptalks.TileLayer("base", {
+                    urlTemplate:
+                        "http://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}.png",
+                    subdomains: ["a", "b", "c", "d", "e"]
+                })
+            });
+            const sceneConfig = {
+                postProcess: {
+                    enable: true,
+                    antialias: {
+                        enable: true,
+                    },
+                    taa: {
+                        enable: true,
+                    },
+                    bloom: {
+                        enable: true,
+                        threshold: 0,
+                        factor: 1,
+                        radius: 0.4,
+                    },
+                }
+            };
+            var groupgllayer = new maptalks.GroupGLLayer('gl', [], { sceneConfig }).addTo(map);
+            var player;
+            maptalks.Ajax.getJSON('https://maptalks.org/maptalks.e3/demo/lines-bus.json', function(err, data) {
+                var timeFlag = 0;
+                var busLines = [].concat.apply([], data.map(function (busLine, idx) {
+                    var prevPt;
+                    var points = [];
+                    for (var i = 0; i < busLine.length; i += 2) {
+                        var pt = [busLine[i], busLine[i + 1]];
+                        if (i > 0) {
+                            pt = [
+                                prevPt[0] + pt[0],
+                                prevPt[1] + pt[1]
+                            ];
+                        }
+                        prevPt = pt;
+
+                        points.push([pt[0] / 1e4, pt[1] / 1e4, timeFlag * 50000, {}]);
+                        timeFlag++;
+                    }
+                    return {
+                        'path': points
+                    };
+                }));
+
+                player = new maptalks.RoutePlayer(busLines, map, {
+                    renderer: 'canvas',
+                    markerSymbol: {
+                        markerFile: 'images/marker.png',
+                        markerWidth: 21,
+                        markerHeight: 31,
+                        markerRotation: 90
+                    }
+                });
+                var unitTime = player.getUnitTime();
+                player.on("playing", function(param) {
+                    if (
+                        player.getCurrentProperties(0) !== undefined &&
+                        player.getCurrentProperties(0) !== null
+                    ) {
+                        $("#info").text(
+                            "current info: " + player.getCurrentProperties(0).info
+                        );
+                    }
+                });
+                player.play();
+            });
+
+            $("#showRoute").change(function() {
+                var flag = $(this).is(":checked");
+                if (flag) {
+                    player.showRoute();
+                } else {
+                    player.hideRoute();
+                }
+            });
+
+            $("#showTrail").change(function() {
+                var flag = $(this).is(":checked");
+                if (flag) {
+                    player.showTrail();
+                } else {
+                    player.hideTrail();
+                }
+            });
+
+            function play() {
+                player.play();
+            }
+
+            function pause() {
+                player.pause();
+            }
+
+            function finish() {
+                player.finish();
+            }
+
+            function cancel() {
+                player.cancel();
+            }
+
+            function speed(t) {
+                player.setUnitTime(unitTime * t);
+            }
+
+            var stats = new Stats();
+            stats.showPanel(0); // 0: fps, 1: ms, 2: mb, 3+: custom
+            document.body.appendChild( stats.dom );
+            function animate() {
+                stats.begin();
+                stats.end();
+                requestAnimationFrame( animate );
+            }
+            animate();
+        </script>
+    </body>
+</html>

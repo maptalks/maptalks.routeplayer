@@ -1,5 +1,5 @@
 describe('GridLayer', function () {
-    var container, map;
+    let container, map;
     beforeEach(function () {
         container = document.createElement('div');
         container.style.width = '400px';

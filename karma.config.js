@@ -2,7 +2,12 @@ const pkg = require('./package.json');
 
 module.exports = {
     basePath : '.',
-    frameworks: ['mocha', 'expect', 'expect-maptalks', 'happen'],
+    frameworks: ['mocha', 'expect'],
+    client: {
+        mocha: {
+            timeout : 10000
+        }
+    },
     files: [
         'node_modules/maptalks/dist/maptalks.js',
         'dist/' + pkg.name + '.js',
