@@ -393,11 +393,27 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
                     symbol: route.markerSymbol || this.options['markerSymbol']
                 }).addTo(this.markerLayer);
             } else if (this.options['renderer'] === 'gl') {
-                route._painter.marker = this.options['markerType'] === 'gltf' ? new maptalks.GLTFMarker(coordinates.coordinate, {
-                    symbol: route.markerSymbol || this.options['markerSymbol']
-                }).addTo(this.markerLayer) : new maptalks.Marker(coordinates.coordinate, {
-                    symbol: route.markerSymbol || this.options['markerSymbol']
-                }).addTo(this.markerLayer);
+                //如果route自定义过markerType，以自定义的为准
+                if (route['markerType']) {
+                    if (route['markerType'] === 'gltf') {
+                        route._painter.marker = new maptalks.GLTFMarker(coordinates.coordinate, {
+                            symbol: route.markerSymbol || this.options['markerSymbol']
+                        }).addTo(this.markerLayer);
+                    } else if (route['markerType'] === 'marker') {
+                        route._painter.marker = new maptalks.GLTFMarker(coordinates.coordinate, {
+                            symbol: route.markerSymbol || this.options['markerSymbol']
+                        });
+                        //为了满足混合模式，需要构建一个PointLayer
+                        this._markerPointerLayer = this._markerPointerLayer || new maptalks.PointLayer(maptalks.INTERNAL_LAYER_PREFIX + '_routeplay_m_' + this.id).addTo(this._map);
+                        route._painter.marker.addTo(this._markerPointerLayer);
+                    }
+                } else {
+                    route._painter.marker = this.options['markerType'] === 'gltf' ? new maptalks.GLTFMarker(coordinates.coordinate, {
+                        symbol: route.markerSymbol || this.options['markerSymbol']
+                    }).addTo(this.markerLayer) : new maptalks.Marker(coordinates.coordinate, {
+                        symbol: route.markerSymbol || this.options['markerSymbol']
+                    }).addTo(this.markerLayer);
+                }
             }
         } else {
             route._painter.marker.setProperties(coordinates.payload);
