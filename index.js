@@ -180,7 +180,7 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
     }
 
     _isInGroupGLLayer() {
-        return this.options['renderer'] === 'gl' && this.options['groupgllayer'] && this.options['groupgllayer'] instanceof maptalks.GroupGLLayer;
+        return this.options['renderer'] === 'gl' && this.options['groupGLLayer'] && this.options['groupGLLayer'] instanceof maptalks.GroupGLLayer;
     }
 
     remove() {
@@ -477,7 +477,7 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
         this.played = 0;
         this.duration = end - start;
         if (this._isInGroupGLLayer()) {
-            this._groupgllayer = this.options['groupgllayer'];
+            this._groupgllayer = this.options['groupGLLayer'];
             if (!this._groupgllayer.getMap()) {
                 this._groupgllayer.addTo(this._map);
             }
@@ -533,15 +533,10 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
                     fitSize: (this.options['layerOptions'] && this.options['layerOptions']['fitSize']) || 30
                 }
             ) : new maptalks.PointLayer(maptalks.INTERNAL_LAYER_PREFIX + '_routeplay_m_' + this.id);
-            if (this._isInGroupGLLayer()) {
-                this.lineLayer.addTo(this._groupgllayer);
-                this.trailLineLayer.addTo(this._groupgllayer);
-                this.markerLayer.addTo(this._groupgllayer);
-            } else {
-                this.lineLayer.addTo(this._map);
-                this.trailLineLayer.addTo(this._map);
-                this.markerLayer.addTo(this._map);
-            }
+            const parent = this._groupgllayer || this._map;
+            this.lineLayer.addTo(parent);
+            this.trailLineLayer.addTo(parent);
+            this.markerLayer.addTo(parent);
         }
     }
 }

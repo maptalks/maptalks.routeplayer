@@ -12,6 +12,7 @@ Route Player plugin for maptalks.js.
 * [Route play with gltf model](https://maptalks.github.io/maptalks.routeplayer/demo/gltfMarker.html)
 * [render by canvas](https://maptalks.github.io/maptalks.routeplayer/demo/RenderWithCanvas.html)
 * [render by webgl](https://maptalks.github.io/maptalks.routeplayer/demo/RenderWithWebgl.html)
+* [add routes with geojson](https://maptalks.github.io/maptalks.routeplayer/demo/geojsonRoutes.html)
 
 ## Install
   
@@ -63,7 +64,7 @@ new maptalks.RoutePlayer(route, map)
     * markerSymbol **Object** marker's symbol object
     * lineSymbol **Object** route line's symbol Object 
     * trailLineSymbol **Object** trail line's symbol Object
-    * groupgllayer **maptalks.GroupGLLayer** set a groupgllayer to render the routes, when specifying a groupgllayer, the render mode must be 'gl'
+    * groupGLLayer **maptalks.GroupGLLayer** set a groupgllayer to render the routes, when specifying a groupgllayer, the render mode must be 'gl'
 
 ### `remove()`
 
