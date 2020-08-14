@@ -113,13 +113,56 @@ const options = {
 export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
     constructor(routes, map, opts) {
         super(opts);
-        if (!Array.isArray(routes)) {
-            routes = [routes];
+        if (isGeoJSON(routes)) {
+            this._routes = this._createRoutes(routes);
+        } else {
+            this._routes = routes;
+        }
+        if (!Array.isArray(this._routes)) {
+            this._routes = [this._routes];
         }
         this.id = maptalks.Util.UID();
         this._map = map;
-        this._setup(routes);
+        this._setup(this._routes);
         this._initRotation();
+    }
+
+    _createRoutes(json) {
+        const geometries = maptalks.GeoJSON.toGeometry(json).filter(geometry =>
+            geometry.getType() === 'MultiLineString' || geometry.getType() === 'LineString'
+        );
+        const routes = [];
+        for (let i = 0; i < geometries.length; i++) {
+            const route = this._createSingleRoute(geometries[i]);
+            routes.push(route);
+        }
+        return routes;
+    }
+
+    _createSingleRoute(geometry) {
+        const prop = geometry.getProperties();
+        const coordTimes = prop['coordTimes'];
+        let singlePath = [];
+        let coordinates = null;
+        if (geometry.getType() === 'MultiLineString') {
+            coordinates = geometry.getCoordinates();
+        } else if (geometry.getType() === 'LineString') {
+            coordinates = [geometry.getCoordinates()];
+        }
+        for (let i = 0; i < coordinates.length; i++) {
+            const cTime = coordTimes[i];
+            const coordinate = coordinates[i];
+            const path = [];
+            for (let j = 0; j < coordinate.length; j++) {
+                const coord = coordinate[j];
+                const t = new Date(cTime[j]).getTime();
+                path.push([coord.x, coord.y, t]);
+            }
+            singlePath = singlePath.concat(path);
+        }
+        return {
+            path: singlePath
+        };
     }
 
     _initRotation() {
@@ -488,3 +531,26 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
 }
 
 RoutePlayer.mergeOptions(options);
+
+const GEOJSON_TYPES = [
+    // geometries
+    'Point',
+    'Polygon',
+    'LineString',
+    'MultiPoint',
+    'MultiPolygon',
+    'MultiLineString',
+    'GeometryCollection',
+    'Feature',
+    'FeatureCollection']
+    .reduce((memo, t) => {
+        memo[t] = true;
+        return memo;
+    }, {});
+
+function isGeoJSON(geoJSON) {
+    if (!geoJSON || typeof geoJSON !== 'object') return false;
+    if (!geoJSON.type) return false;
+    if (!GEOJSON_TYPES[geoJSON.type]) return false;
+    return true;
+}

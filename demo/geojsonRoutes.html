@@ -2,9 +2,8 @@
 <html>
     <head>
         <meta charset="UTF-8" />
-        <title>canvas绘制</title>
+        <title>maptalks.heat demo</title>
         <script src="https://unpkg.com/jquery@<3.3.1/dist/jquery.min.js"></script>
-        <script src="stat.min.js"></script>
         <script src="https://unpkg.com/maptalks@<2.0.0/dist/maptalks.min.js"></script>
         <script src="../dist/maptalks.routeplayer.js"></script>
         <link
@@ -58,18 +57,11 @@
         </div>
         <script>
             var map = new maptalks.Map("map", {
-                center: [116.40496063446926, 39.911371516938146],
-                zoom: 13,
-                pitch: 52.4,
-                bearing: -13.2,
-                lights: {
-                    ambient: {
-                        color: [0.1, 0.1, 0.1]
-                    },
-                    directional: {
-                        color: [1, 1, 1],
-                        direction: [1, 0, -1],
-                    }
+                center: [-71.09622, 42.210009],
+                zoom: 14,
+                attributionControl: {
+                    content:
+                        '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, &copy; <a href="https://carto.com/attributions">CARTO</a>'
                 },
                 baseLayer: new maptalks.TileLayer("base", {
                     urlTemplate:
@@ -77,55 +69,11 @@
                     subdomains: ["a", "b", "c", "d", "e"]
                 })
             });
-            const sceneConfig = {
-                postProcess: {
-                    enable: true,
-                    antialias: {
-                        enable: true,
-                    },
-                    taa: {
-                        enable: true,
-                    },
-                    bloom: {
-                        enable: true,
-                        threshold: 0,
-                        factor: 1,
-                        radius: 0.4,
-                    },
-                }
-            };
+
             var player;
-            maptalks.Ajax.getJSON('https://maptalks.org/maptalks.e3/demo/lines-bus.json', function(err, data) {
-                var timeFlag = 0;
-                var busLines = [].concat.apply([], data.map(function (busLine, idx) {
-                    var prevPt;
-                    var points = [];
-                    for (var i = 0; i < busLine.length; i += 2) {
-                        var pt = [busLine[i], busLine[i + 1]];
-                        if (i > 0) {
-                            pt = [
-                                prevPt[0] + pt[0],
-                                prevPt[1] + pt[1]
-                            ];
-                        }
-                        prevPt = pt;
-
-                        points.push([pt[0] / 1e4, pt[1] / 1e4, timeFlag * 50000, {}]);
-                        timeFlag++;
-                    }
-                    return {
-                        'path': points
-                    };
-                }));
-
-                player = new maptalks.RoutePlayer(busLines, map, {
-                    renderer: 'canvas',
-                    markerSymbol: {
-                        markerFile: 'images/marker.png',
-                        markerWidth: 21,
-                        markerHeight: 31,
-                        markerRotation: 90
-                    }
+            maptalks.Ajax.getJSON('data/gpx.json', function(err, data) {
+                player = new maptalks.RoutePlayer(data, map, {
+                    renderer: 'canvas'
                 });
                 var unitTime = player.getUnitTime();
                 player.on("playing", function(param) {
@@ -138,8 +86,10 @@
                         );
                     }
                 });
+
                 player.play();
             });
+
 
             $("#showRoute").change(function() {
                 var flag = $(this).is(":checked");
@@ -178,16 +128,6 @@
             function speed(t) {
                 player.setUnitTime(unitTime * t);
             }
-
-            var stats = new Stats();
-            stats.showPanel(0); // 0: fps, 1: ms, 2: mb, 3+: custom
-            document.body.appendChild( stats.dom );
-            function animate() {
-                stats.begin();
-                stats.end();
-                requestAnimationFrame( animate );
-            }
-            animate();
         </script>
     </body>
 </html>
