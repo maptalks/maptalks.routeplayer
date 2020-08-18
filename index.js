@@ -94,6 +94,7 @@ const options = {
     unitTime: 1 * 1000,
     showRoutes: true,
     showTrail: true,
+    maxTrailLine: 0,
     markerSymbol: null,
     lineSymbol: {
         lineWidth: 2,
@@ -348,6 +349,12 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
             }).addTo(this.trailLineLayer);
             route._painter.trailLine = trailLine;
         } else {
+            // remove extra trail point by maxTrailLine, 0 => disable
+            const maxLineCount = this.options['maxTrailLine'];
+            if (maxLineCount !== 0 && this.trailLinePoints.length > maxLineCount) {
+                this.trailLinePoints.shift();
+            }
+
             this.trailLinePoints.push(coordinates.coordinate);
             if (this.trailLinePoints.length > 1) {
                 route._painter.trailLine.setCoordinates(this.trailLinePoints);

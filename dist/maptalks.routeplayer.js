@@ -1,7 +1,7 @@
 /*!
  * maptalks.routeplayer v0.1.0
  * LICENSE : MIT
- * (c) 2016-2019 maptalks.org
+ * (c) 2016-2020 maptalks.org
  */
 /*!
  * requires maptalks@^0.23.0 
@@ -119,6 +119,7 @@ var options = {
     unitTime: 1 * 1000,
     showRoutes: true,
     showTrail: true,
+    maxTrailLine: 0,
     markerSymbol: null,
     lineSymbol: {
         lineWidth: 2,
@@ -378,6 +379,12 @@ var RoutePlayer = function (_maptalks$Eventable) {
             }).addTo(this.trailLineLayer);
             route._painter.trailLine = trailLine;
         } else {
+            // remove extra trail point by maxTrailLine, 0 => disable
+            var maxLineCount = this.options['maxTrailLine'];
+            if (maxLineCount !== 0 && this.trailLinePoints.length > maxLineCount) {
+                this.trailLinePoints.shift();
+            }
+
             this.trailLinePoints.push(coordinates.coordinate);
             if (this.trailLinePoints.length > 1) {
                 route._painter.trailLine.setCoordinates(this.trailLinePoints);
