@@ -70,7 +70,9 @@
                 })
             });
 
-            var player = new maptalks.RoutePlayer(route, map);
+            var player = new maptalks.RoutePlayer(route, map, {
+                    maxTrailLine: 10
+                });
             var unitTime = player.getUnitTime();
             player.on("playing", function(param) {
                 if (
