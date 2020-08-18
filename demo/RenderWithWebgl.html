@@ -100,7 +100,7 @@
             };
             var groupgllayer = new maptalks.GroupGLLayer('gl', [], { sceneConfig }).addTo(map);
             var player;
-            maptalks.Ajax.getJSON('https://maptalks.org/maptalks.e3/demo/lines-bus.json', function(err, data) {
+            maptalks.Ajax.getJSON('https://github.com/maptalks/maptalks.e3/raw/master/demo/lines-bus.json', function(err, data) {
                 var timeFlag = 0;
                 var busLines = [].concat.apply([], data.map(function (busLine, idx) {
                     var prevPt;
@@ -131,7 +131,8 @@
                         markerHeight: 31,
                         markerRotation: 90
                     },
-                    groupGLLayer: groupgllayer
+                    groupGLLayer: groupgllayer,
+                    // maxTrailLine: 10
                 });
                 var unitTime = player.getUnitTime();
                 player.on("playing", function(param) {
