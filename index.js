@@ -111,6 +111,24 @@ const options = {
     }
 };
 
+const sceneConfig = {
+    postProcess: {
+        enable: true,
+        antialias: {
+            enable: true,
+        },
+        taa: {
+            enable: true,
+        },
+        bloom: {
+            enable: true,
+            threshold: 0,
+            factor: 1,
+            radius: 0.4,
+        },
+    }
+};
+
 export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
     constructor(routes, map, opts) {
         super(opts);
@@ -178,10 +196,6 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
                 this._markerRotation = rotationCanvas;
             }
         }
-    }
-
-    _isInGroupGLLayer() {
-        return this.options['renderer'] === 'gl' && this.options['groupGLLayer'] && this.options['groupGLLayer'] instanceof maptalks.GroupGLLayer;
     }
 
     remove() {
@@ -483,8 +497,8 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
         this.endTime = end;
         this.played = 0;
         this.duration = end - start;
-        if (this._isInGroupGLLayer()) {
-            this._groupgllayer = this.options['groupGLLayer'];
+        if (this.options['renderer'] === 'gl') {
+            this._groupgllayer = this.options['groupGLLayer'] || new maptalks.GroupGLLayer(maptalks.INTERNAL_LAYER_PREFIX + '_routeplay_groupgllayer_' + this.id, [], { sceneConfig });
             if (!this._groupgllayer.getMap()) {
                 this._groupgllayer.addTo(this._map);
             }
@@ -540,10 +554,9 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
                     fitSize: (this.options['layerOptions'] && this.options['layerOptions']['fitSize']) || 30
                 }
             ) : new maptalks.PointLayer(maptalks.INTERNAL_LAYER_PREFIX + '_routeplay_m_' + this.id);
-            const parent = this._groupgllayer || this._map;
-            this.lineLayer.addTo(parent);
-            this.trailLineLayer.addTo(parent);
-            this.markerLayer.addTo(parent);
+            this.lineLayer.addTo(this._groupgllayer);
+            this.trailLineLayer.addTo(this._groupgllayer);
+            this.markerLayer.addTo(this._groupgllayer);
         }
     }
 }
