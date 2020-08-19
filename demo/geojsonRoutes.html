@@ -57,7 +57,7 @@
         </div>
         <script>
             var map = new maptalks.Map("map", {
-                center: [121.505, 31.2611],
+                center: [-71.09622, 42.210009],
                 zoom: 14,
                 attributionControl: {
                     content:
@@ -70,20 +70,26 @@
                 })
             });
 
-            var player = new maptalks.RoutePlayer(route, map, {
-                renderer: 'canvas'
+            var player;
+            maptalks.Ajax.getJSON('data/gpx.json', function(err, data) {
+                player = new maptalks.RoutePlayer(data, map, {
+                    renderer: 'canvas'
+                });
+                var unitTime = player.getUnitTime();
+                player.on("playing", function(param) {
+                    if (
+                        player.getCurrentProperties(0) !== undefined &&
+                        player.getCurrentProperties(0) !== null
+                    ) {
+                        $("#info").text(
+                            "current info: " + player.getCurrentProperties(0).info
+                        );
+                    }
+                });
+
+                player.play();
             });
-            var unitTime = player.getUnitTime();
-            player.on("playing", function(param) {
-                if (
-                    player.getCurrentProperties(0) !== undefined &&
-                    player.getCurrentProperties(0) !== null
-                ) {
-                    $("#info").text(
-                        "current info: " + player.getCurrentProperties(0).info
-                    );
-                }
-            });
+
 
             $("#showRoute").change(function() {
                 var flag = $(this).is(":checked");
@@ -102,8 +108,6 @@
                     player.hideTrail();
                 }
             });
-
-            player.play();
 
             function play() {
                 player.play();

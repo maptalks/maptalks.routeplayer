@@ -1,5 +1,6 @@
 import * as maptalks from 'maptalks';
 
+const markerRotation = [0, 0, 0];
 export class Route {
     constructor(r) {
         this.route = r;
@@ -10,7 +11,7 @@ export class Route {
         if (t < this.getStart() || t > this.getEnd()) {
             return null;
         }
-        var idx = null;
+        let idx = null;
         let payload = null;
         for (let i = 0, l = this.path.length; i < l; i++) {
             if (t < this.path[i][2]) {
@@ -30,11 +31,9 @@ export class Route {
         const x = p1[0] + (p2[0] - p1[0]) * r,
             y = p1[1] + (p2[1] - p1[1]) * r,
             coord = new maptalks.Coordinate(x, y),
+            cp1 = map.coordinateToViewPoint(new maptalks.Coordinate(p1)),
             vp = map.coordinateToViewPoint(coord);
-        const degree = maptalks.Util.computeDegree(
-            map.coordinateToViewPoint(new maptalks.Coordinate(p1)),
-            vp
-        );
+        const degree = 180 * maptalks.Util.computeDegree(cp1.x, -cp1.y, vp.x, -vp.y) / Math.PI;
         return {
             coordinate: coord,
             viewPoint: vp,
@@ -91,9 +90,12 @@ export class Route {
 }
 
 const options = {
+    renderer: 'gl',
+    markerType: 'marker',
     unitTime: 1 * 1000,
     showRoutes: true,
     showTrail: true,
+    maxTrailLine: 0,
     markerSymbol: null,
     lineSymbol: {
         lineWidth: 2,
@@ -109,15 +111,91 @@ const options = {
     }
 };
 
+const sceneConfig = {
+    postProcess: {
+        enable: true,
+        antialias: {
+            enable: true,
+        },
+        taa: {
+            enable: true,
+        },
+        bloom: {
+            enable: true,
+            threshold: 0,
+            factor: 1,
+            radius: 0.4,
+        },
+    }
+};
+
 export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
     constructor(routes, map, opts) {
         super(opts);
-        if (!Array.isArray(routes)) {
-            routes = [routes];
+        if (isGeoJSON(routes)) {
+            this._routes = this._createRoutes(routes);
+        } else {
+            this._routes = routes;
+        }
+        if (!Array.isArray(this._routes)) {
+            this._routes = [this._routes];
         }
         this.id = maptalks.Util.UID();
         this._map = map;
-        this._setup(routes);
+        this._setup(this._routes);
+        this._initRotation();
+    }
+
+    _createRoutes(json) {
+        const geometries = maptalks.GeoJSON.toGeometry(json).filter(geometry =>
+            geometry.getType() === 'MultiLineString' || geometry.getType() === 'LineString'
+        );
+        const routes = [];
+        for (let i = 0; i < geometries.length; i++) {
+            const route = this._createSingleRoute(geometries[i]);
+            routes.push(route);
+        }
+        return routes;
+    }
+
+    _createSingleRoute(geometry) {
+        const prop = geometry.getProperties();
+        const coordTimes = prop['coordTimes'];
+        let singlePath = [];
+        let coordinates = null;
+        if (geometry.getType() === 'MultiLineString') {
+            coordinates = geometry.getCoordinates();
+        } else if (geometry.getType() === 'LineString') {
+            coordinates = [geometry.getCoordinates()];
+        }
+        for (let i = 0; i < coordinates.length; i++) {
+            const cTime = coordTimes[i];
+            const coordinate = coordinates[i];
+            const path = [];
+            for (let j = 0; j < coordinate.length; j++) {
+                const coord = coordinate[j];
+                const t = new Date(cTime[j]).getTime();
+                path.push([coord.x, coord.y, t]);
+            }
+            singlePath = singlePath.concat(path);
+        }
+        return {
+            path: singlePath
+        };
+    }
+
+    _initRotation() {
+        const rotationCanvas = (this.options['markerSymbol'] && this.options['markerSymbol']['markerRotation']) || 0;
+        const rotationGL = (this.options['markerSymbol'] && this.options['markerSymbol']['rotation']) || [0, 0, 0];
+        if (this.options['renderer'] === 'canvas') {
+            this._markerRotation = rotationCanvas;
+        } else if (this.options['renderer'] === 'gl') {
+            if (this.options['markerType'] === 'gltf') {
+                this._markerRotation = rotationGL;
+            } else if (this.options['markerType'] === 'marker') {
+                this._markerRotation = rotationCanvas;
+            }
+        }
     }
 
     remove() {
@@ -157,7 +235,7 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
         this.player.cancel();
         this.played = 0;
         this.trailLinePoints = [];
-        let line = this.trailLineLayer.getGeometries()[0];
+        const line = this.trailLineLayer.getGeometries()[0];
         if (line !== undefined)
             line.setCoordinates(this.trailLinePoints);
         this._createPlayer();
@@ -172,8 +250,8 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
         }
 
         // complete trail line
-        let line = this.trailLineLayer.getGeometries()[0];
-        let coors = this.routes[0].path.map(item=>{
+        const line = this.trailLineLayer.getGeometries()[0];
+        const coors = this.routes[0].path.map(item=>{
             return [item[0], item[1]];
         });
         this.trailLinePoints = coors;
@@ -222,7 +300,7 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
         if (!index) {
             index = 0;
         }
-        if (!this.routes[index] || !this.routes[index]._painter) {
+        if (!this.routes[index] || !this.routes[index]._painter || !this.routes[index]._painter.marker) {
             return null;
         }
 
@@ -325,10 +403,33 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
             route._painter = {};
         }
         if (!route._painter.marker) {
-            const marker = new maptalks.Marker(coordinates.coordinate, {
-                symbol: route.markerSymbol || this.options['markerSymbol']
-            }).addTo(this.markerLayer);
-            route._painter.marker = marker;
+            if (this.options['renderer'] === 'canvas') {
+                route._painter.marker = new maptalks.Marker(coordinates.coordinate, {
+                    symbol: route.markerSymbol || this.options['markerSymbol']
+                }).addTo(this.markerLayer);
+            } else if (this.options['renderer'] === 'gl') {
+                //如果route自定义过markerType，以自定义的为准
+                if (route['markerType']) {
+                    if (route['markerType'] === 'gltf') {
+                        route._painter.marker = new maptalks.GLTFMarker(coordinates.coordinate, {
+                            symbol: route.markerSymbol || this.options['markerSymbol']
+                        }).addTo(this.markerLayer);
+                    } else if (route['markerType'] === 'marker') {
+                        route._painter.marker = new maptalks.GLTFMarker(coordinates.coordinate, {
+                            symbol: route.markerSymbol || this.options['markerSymbol']
+                        });
+                        //为了满足混合模式，需要构建一个PointLayer
+                        this._markerPointerLayer = this._markerPointerLayer || new maptalks.PointLayer(maptalks.INTERNAL_LAYER_PREFIX + '_routeplay_m_' + this.id).addTo(this._map);
+                        route._painter.marker.addTo(this._markerPointerLayer);
+                    }
+                } else {
+                    route._painter.marker = this.options['markerType'] === 'gltf' ? new maptalks.GLTFMarker(coordinates.coordinate, {
+                        symbol: route.markerSymbol || this.options['markerSymbol']
+                    }).addTo(this.markerLayer) : new maptalks.Marker(coordinates.coordinate, {
+                        symbol: route.markerSymbol || this.options['markerSymbol']
+                    }).addTo(this.markerLayer);
+                }
+            }
         } else {
             route._painter.marker.setProperties(coordinates.payload);
             route._painter.marker.setCoordinates(coordinates.coordinate);
@@ -337,7 +438,6 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
             const line = new maptalks.LineString(route.path, {
                 symbol: route.lineSymbol || this.options['lineSymbol']
             }).addTo(this.lineLayer);
-
             route._painter.line = line;
         }
 
@@ -348,19 +448,42 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
             }).addTo(this.trailLineLayer);
             route._painter.trailLine = trailLine;
         } else {
+            // remove extra trail point by maxTrailLine, 0 => disable
+            const maxLineCount = this.options['maxTrailLine'];
+            if (maxLineCount !== 0 && this.trailLinePoints.length > maxLineCount) {
+                this.trailLinePoints.shift();
+            }
+
             this.trailLinePoints.push(coordinates.coordinate);
             if (this.trailLinePoints.length > 1) {
                 route._painter.trailLine.setCoordinates(this.trailLinePoints);
             }
         }
+        if (this.options['renderer'] === 'canvas') {
+            route._painter.marker.updateSymbol({
+                markerRotation: this._markerRotation + coordinates.degree
+            });
+        } else if (this.options['renderer'] === 'gl') {
+            if (this.options['markerType'] === 'gltf') {
+                markerRotation[0] = this._markerRotation[0];
+                markerRotation[1] = this._markerRotation[1];
+                markerRotation[2] = this._markerRotation[2] + coordinates.degree;
+                route._painter.marker.setRotation(markerRotation[0], markerRotation[1], markerRotation[2]);
+            } else if (this.options['markerType'] === 'marker') {
+                route._painter.marker.updateSymbol({
+                    markerRotation: this._markerRotation + coordinates.degree
+                });
+            }
+
+        }
     }
 
     _setup(rs) {
         const routes = rs.map(r => new Route(r));
-        var start = routes[0].getStart(),
+        let start = routes[0].getStart(),
             end = routes[0].getEnd();
         for (let i = 1; i < routes.length; i++) {
-            let route = routes[i];
+            const route = routes[i];
             if (route.getStart() < start) {
                 start = route.getStart();
             }
@@ -374,6 +497,12 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
         this.endTime = end;
         this.played = 0;
         this.duration = end - start;
+        if (this.options['renderer'] === 'gl') {
+            this._groupgllayer = this.options['groupGLLayer'] || new maptalks.GroupGLLayer(maptalks.INTERNAL_LAYER_PREFIX + '_routeplay_groupgllayer_' + this.id, [], { sceneConfig });
+            if (!this._groupgllayer.getMap()) {
+                this._groupgllayer.addTo(this._map);
+            }
+        }
         this._createLayers();
         this._createPlayer();
     }
@@ -382,7 +511,7 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
         const duration =
             (this.duration - this.played) / this.options['unitTime'];
         let framer;
-        const renderer = this._map._getRenderer();
+        const renderer = this._map['_getRenderer']();
         if (renderer.callInFrameLoop) {
             framer = function (fn) {
                 renderer.callInFrameLoop(fn);
@@ -402,16 +531,57 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
     }
 
     _createLayers() {
-        this.lineLayer = new maptalks.VectorLayer(
-            maptalks.INTERNAL_LAYER_PREFIX + '_routeplay_r_' + this.id, [], { visible:this.options['showRoutes'], enableSimplify:false }
-        ).addTo(this._map);
-        this.trailLineLayer = new maptalks.VectorLayer(
-            maptalks.INTERNAL_LAYER_PREFIX + '_routeplay_t_' + this.id, [], { visible:this.options['showTrail'], enableSimplify:false }
-        ).addTo(this._map);
-        this.markerLayer = new maptalks.VectorLayer(
-            maptalks.INTERNAL_LAYER_PREFIX + '_routeplay_m_' + this.id
-        ).addTo(this._map);
+        if (this.options['renderer'] === 'canvas') {
+            this.lineLayer = new maptalks.VectorLayer(
+                maptalks.INTERNAL_LAYER_PREFIX + '_routeplay_r_' + this.id, [], { visible:this.options['showRoutes'], enableSimplify:false }
+            ).addTo(this._map);
+            this.trailLineLayer = new maptalks.VectorLayer(
+                maptalks.INTERNAL_LAYER_PREFIX + '_routeplay_t_' + this.id, [], { visible:this.options['showTrail'], enableSimplify:false }
+            ).addTo(this._map);
+            this.markerLayer = new maptalks.VectorLayer(
+                maptalks.INTERNAL_LAYER_PREFIX + '_routeplay_m_' + this.id
+            ).addTo(this._map);
+        } else if (this.options['renderer'] === 'gl') {
+            this.lineLayer = new maptalks.LineStringLayer(
+                maptalks.INTERNAL_LAYER_PREFIX + '_routeplay_r_' + this.id, [], { visible:this.options['showRoutes'], enableSimplify:false }
+            );
+            this.trailLineLayer = new maptalks.LineStringLayer(
+                maptalks.INTERNAL_LAYER_PREFIX + '_routeplay_t_' + this.id, [], { visible:this.options['showTrail'], enableSimplify:false }
+            );
+            this.markerLayer = this.options['markerType'] === 'gltf' ? new maptalks.GLTFLayer(
+                maptalks.INTERNAL_LAYER_PREFIX + '_routeplay_m_' + this.id,
+                {
+                    fitSize: (this.options['layerOptions'] && this.options['layerOptions']['fitSize']) || 30
+                }
+            ) : new maptalks.PointLayer(maptalks.INTERNAL_LAYER_PREFIX + '_routeplay_m_' + this.id);
+            this.lineLayer.addTo(this._groupgllayer);
+            this.trailLineLayer.addTo(this._groupgllayer);
+            this.markerLayer.addTo(this._groupgllayer);
+        }
     }
 }
 
 RoutePlayer.mergeOptions(options);
+
+const GEOJSON_TYPES = [
+    // geometries
+    'Point',
+    'Polygon',
+    'LineString',
+    'MultiPoint',
+    'MultiPolygon',
+    'MultiLineString',
+    'GeometryCollection',
+    'Feature',
+    'FeatureCollection']
+    .reduce((memo, t) => {
+        memo[t] = true;
+        return memo;
+    }, {});
+
+function isGeoJSON(geoJSON) {
+    if (!geoJSON || typeof geoJSON !== 'object') return false;
+    if (!geoJSON.type) return false;
+    if (!GEOJSON_TYPES[geoJSON.type]) return false;
+    return true;
+}

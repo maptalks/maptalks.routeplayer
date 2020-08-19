@@ -4,7 +4,11 @@
         <meta charset="UTF-8" />
         <title>maptalks.heat demo</title>
         <script src="https://unpkg.com/jquery@<3.3.1/dist/jquery.min.js"></script>
-        <script src="https://unpkg.com/maptalks@<2.0.0/dist/maptalks.min.js"></script>
+        <script src="https://unpkg.com/maptalks@1.0.0-alpha.9/dist/maptalks.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@maptalks/gl/dist/maptalksgl.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@maptalks/vt/dist/maptalks.vt.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@maptalks/gltf-layer/dist/maptalks.gltf.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@maptalks/vt.basic/dist/maptalks.vt.basic.js"></script>
         <script src="../dist/maptalks.routeplayer.js"></script>
         <link
             type="text/css"
@@ -71,7 +75,12 @@
             });
 
             var player = new maptalks.RoutePlayer(route, map, {
-                renderer: 'canvas'
+                renderer: 'gl',
+                markerType: 'gltf',
+                markerSymbol: {
+                    'url': 'gltf/moto/moto.gltf',
+                    'rotation': [90, 0, 90]
+                }
             });
             var unitTime = player.getUnitTime();
             player.on("playing", function(param) {
