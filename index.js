@@ -95,6 +95,7 @@ const options = {
     unitTime: 1 * 1000,
     showRoutes: true,
     showTrail: true,
+    maxTrailLine: 0,
     markerSymbol: null,
     lineSymbol: {
         lineWidth: 2,
@@ -447,6 +448,12 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
             }).addTo(this.trailLineLayer);
             route._painter.trailLine = trailLine;
         } else {
+            // remove extra trail point by maxTrailLine, 0 => disable
+            const maxLineCount = this.options['maxTrailLine'];
+            if (maxLineCount !== 0 && this.trailLinePoints.length > maxLineCount) {
+                this.trailLinePoints.shift();
+            }
+
             this.trailLinePoints.push(coordinates.coordinate);
             if (this.trailLinePoints.length > 1) {
                 route._painter.trailLine.setCoordinates(this.trailLinePoints);
@@ -539,7 +546,7 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
                 maptalks.INTERNAL_LAYER_PREFIX + '_routeplay_r_' + this.id, [], { visible:this.options['showRoutes'], enableSimplify:false }
             );
             this.trailLineLayer = new maptalks.LineStringLayer(
-                maptalks.INTERNAL_LAYER_PREFIX + '_routeplay_t_' + this.id, [], { visible:this.options['showRoutes'], enableSimplify:false }
+                maptalks.INTERNAL_LAYER_PREFIX + '_routeplay_t_' + this.id, [], { visible:this.options['showTrail'], enableSimplify:false }
             );
             this.markerLayer = this.options['markerType'] === 'gltf' ? new maptalks.GLTFLayer(
                 maptalks.INTERNAL_LAYER_PREFIX + '_routeplay_m_' + this.id,
