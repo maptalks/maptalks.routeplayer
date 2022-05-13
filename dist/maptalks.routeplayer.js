@@ -1,7 +1,7 @@
 /*!
  * maptalks.routeplayer v0.1.0
  * LICENSE : MIT
- * (c) 2016-2020 maptalks.org
+ * (c) 2016-2022 maptalks.org
  */
 /*!
  * requires maptalks@^0.23.0 
@@ -135,6 +135,25 @@ var options = {
     }
 };
 
+function degreesToRadians(degrees) {
+    return degrees % 360 * Math.PI / 180;
+}
+
+function radiansToDegrees(radians) {
+    var degrees = radians % (2 * Math.PI);
+    return degrees * 180 / Math.PI;
+}
+
+function computeBearing(c1, c2) {
+    var lon1 = degreesToRadians(c1.x || c1[0]);
+    var lat1 = degreesToRadians(c1.y || c1[1]);
+    var lon2 = degreesToRadians(c2.x || c2[0]);
+    var lat2 = degreesToRadians(c2.y || c2[1]);
+    var a = Math.sin(lon2 - lon1) * Math.cos(lat2);
+    var b = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(lon2 - lon1);
+    return radiansToDegrees(Math.atan2(a, b));
+}
+
 var RoutePlayer = function (_maptalks$Eventable) {
     _inherits(RoutePlayer, _maptalks$Eventable);
 
@@ -148,6 +167,8 @@ var RoutePlayer = function (_maptalks$Eventable) {
         }
         _this.id = maptalks.Util.UID();
         _this._map = map;
+        _this._follow = opts['perspectiveFollow'];
+        _this._historyConfig = {};
         _this._setup(routes);
         return _this;
     }
@@ -172,6 +193,9 @@ var RoutePlayer = function (_maptalks$Eventable) {
             return this;
         }
         this.player.play();
+        if (this._follow) {
+            this._setFollowView();
+        }
         this.fire('playstart');
         return this;
     };
@@ -314,6 +338,17 @@ var RoutePlayer = function (_maptalks$Eventable) {
         this.trailLineLayer.hide();
     };
 
+    RoutePlayer.prototype.enableFollow = function enableFollow() {
+        this._setFollowView();
+        this._follow = true;
+    };
+
+    RoutePlayer.prototype.disabledFollow = function disabledFollow() {
+        this._follow = false;
+        // this._map.setZoom(this._historyConfig.zoom);
+        this._map.setPitch(this._historyConfig.pitch);
+    };
+
     RoutePlayer.prototype._resetPlayer = function _resetPlayer() {
         var playing = this.player && this.player.playState === 'running';
         if (playing) {
@@ -390,6 +425,33 @@ var RoutePlayer = function (_maptalks$Eventable) {
                 route._painter.trailLine.setCoordinates(this.trailLinePoints);
             }
         }
+        if (this._follow) {
+            this._perspectiveFollow();
+        }
+        this._preCoordinate = coordinates.coordinate;
+    };
+
+    RoutePlayer.prototype._perspectiveFollow = function _perspectiveFollow() {
+        var currentCoordinate = this.getCurrentCoordinates();
+        if (!this._preCoordinate || !currentCoordinate) return;
+        var map = this._map;
+        var bearing = this._getBearing(this._preCoordinate, currentCoordinate);
+        map.setCenter(currentCoordinate);
+        map.setBearing(bearing);
+    };
+
+    RoutePlayer.prototype._setFollowView = function _setFollowView() {
+        this._map.setZoom(17);
+        this._map.setPitch(65);
+    };
+
+    RoutePlayer.prototype._getBearing = function _getBearing(c1, c2) {
+        var bearing = computeBearing(c1, c2);
+        var mapBearing = this._map.getBearing();
+        if (Math.abs(mapBearing - bearing) < 30) {
+            return mapBearing;
+        }
+        return bearing;
     };
 
     RoutePlayer.prototype._setup = function _setup(rs) {
@@ -436,8 +498,14 @@ var RoutePlayer = function (_maptalks$Eventable) {
     };
 
     RoutePlayer.prototype._createLayers = function _createLayers() {
-        this.lineLayer = new maptalks.VectorLayer(maptalks.INTERNAL_LAYER_PREFIX + '_routeplay_r_' + this.id, [], { visible: this.options['showRoutes'], enableSimplify: false }).addTo(this._map);
-        this.trailLineLayer = new maptalks.VectorLayer(maptalks.INTERNAL_LAYER_PREFIX + '_routeplay_t_' + this.id, [], { visible: this.options['showTrail'], enableSimplify: false }).addTo(this._map);
+        this.lineLayer = new maptalks.VectorLayer(maptalks.INTERNAL_LAYER_PREFIX + '_routeplay_r_' + this.id, [], {
+            visible: this.options['showRoutes'],
+            enableSimplify: false
+        }).addTo(this._map);
+        this.trailLineLayer = new maptalks.VectorLayer(maptalks.INTERNAL_LAYER_PREFIX + '_routeplay_t_' + this.id, [], {
+            visible: this.options['showTrail'],
+            enableSimplify: false
+        }).addTo(this._map);
         this.markerLayer = new maptalks.VectorLayer(maptalks.INTERNAL_LAYER_PREFIX + '_routeplay_m_' + this.id).addTo(this._map);
     };
 

@@ -100,7 +100,7 @@ const options = {
         lineWidth: 2,
         lineColor: '#004A8D'
     },
-    trailLineSymbol : {
+    trailLineSymbol: {
         lineColor: 'rgba(250,0,0,1)',
         lineWidth: 4,
         lineJoin: 'round', //miter, round, bevel
@@ -110,6 +110,27 @@ const options = {
     }
 };
 
+function degreesToRadians(degrees) {
+    return (degrees % 360) * Math.PI / 180;
+}
+
+function radiansToDegrees(radians) {
+    const degrees = radians % (2 * Math.PI);
+    return (degrees * 180) / Math.PI;
+}
+
+function computeBearing(c1, c2) {
+    const lon1 = degreesToRadians(c1.x || c1[0]);
+    const lat1 = degreesToRadians(c1.y || c1[1]);
+    const lon2 = degreesToRadians(c2.x || c2[0]);
+    const lat2 = degreesToRadians(c2.y || c2[1]);
+    const a = Math.sin(lon2 - lon1) * Math.cos(lat2);
+    const b =
+        Math.cos(lat1) * Math.sin(lat2) -
+        Math.sin(lat1) * Math.cos(lat2) * Math.cos(lon2 - lon1);
+    return radiansToDegrees(Math.atan2(a, b));
+}
+
 export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
     constructor(routes, map, opts) {
         super(opts);
@@ -118,6 +139,8 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
         }
         this.id = maptalks.Util.UID();
         this._map = map;
+        this._follow = opts['perspectiveFollow'];
+        this._historyConfig = {};
         this._setup(routes);
     }
 
@@ -141,6 +164,9 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
             return this;
         }
         this.player.play();
+        if (this._follow) {
+            this._setFollowView();
+        }
         this.fire('playstart');
         return this;
     }
@@ -174,7 +200,7 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
 
         // complete trail line
         let line = this.trailLineLayer.getGeometries()[0];
-        let coors = this.routes[0].path.map(item=>{
+        let coors = this.routes[0].path.map(item => {
             return [item[0], item[1]];
         });
         this.trailLinePoints = coors;
@@ -284,6 +310,17 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
         this.trailLineLayer.hide();
     }
 
+    enableFollow() {
+        this._setFollowView();
+        this._follow = true;
+    }
+
+    disabledFollow() {
+        this._follow = false;
+        // this._map.setZoom(this._historyConfig.zoom);
+        this._map.setPitch(this._historyConfig.pitch);
+    }
+
     _resetPlayer() {
         const playing = this.player && this.player.playState === 'running';
         if (playing) {
@@ -360,6 +397,33 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
                 route._painter.trailLine.setCoordinates(this.trailLinePoints);
             }
         }
+        if (this._follow) {
+            this._perspectiveFollow();
+        }
+        this._preCoordinate = coordinates.coordinate;
+    }
+
+    _perspectiveFollow() {
+        const currentCoordinate = this.getCurrentCoordinates();
+        if (!this._preCoordinate || !currentCoordinate) return;
+        const map = this._map;
+        const bearing = this._getBearing(this._preCoordinate, currentCoordinate);
+        map.setCenter(currentCoordinate);
+        map.setBearing(bearing);
+    }
+
+    _setFollowView() {
+        this._map.setZoom(17);
+        this._map.setPitch(65);
+    }
+
+    _getBearing(c1, c2) {
+        const bearing = computeBearing(c1, c2);
+        const mapBearing = this._map.getBearing();
+        if (Math.abs(mapBearing - bearing) < 30) {
+            return mapBearing;
+        }
+        return bearing;
     }
 
     _setup(rs) {
@@ -410,10 +474,16 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
 
     _createLayers() {
         this.lineLayer = new maptalks.VectorLayer(
-            maptalks.INTERNAL_LAYER_PREFIX + '_routeplay_r_' + this.id, [], { visible:this.options['showRoutes'], enableSimplify:false }
+            maptalks.INTERNAL_LAYER_PREFIX + '_routeplay_r_' + this.id, [], {
+                visible: this.options['showRoutes'],
+                enableSimplify: false
+            }
         ).addTo(this._map);
         this.trailLineLayer = new maptalks.VectorLayer(
-            maptalks.INTERNAL_LAYER_PREFIX + '_routeplay_t_' + this.id, [], { visible:this.options['showTrail'], enableSimplify:false }
+            maptalks.INTERNAL_LAYER_PREFIX + '_routeplay_t_' + this.id, [], {
+                visible: this.options['showTrail'],
+                enableSimplify: false
+            }
         ).addTo(this._map);
         this.markerLayer = new maptalks.VectorLayer(
             maptalks.INTERNAL_LAYER_PREFIX + '_routeplay_m_' + this.id
