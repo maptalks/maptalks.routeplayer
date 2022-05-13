@@ -54,6 +54,10 @@
                 <input type="checkbox" id="showTrail" checked />
                 showTrail
             </label>
+            <label>
+                <input type="checkbox" id="follow" />
+                视角跟随
+            </label>
         </div>
         <script>
             var map = new maptalks.Map("map", {
@@ -71,9 +75,10 @@
             });
 
             var player = new maptalks.RoutePlayer(route, map, {
-                    maxTrailLine: 10
+                    maxTrailLine: 10,
                 });
             var unitTime = player.getUnitTime();
+            speed(0.2);
             player.on("playing", function(param) {
                 if (
                     player.getCurrentProperties(0) !== undefined &&
@@ -103,6 +108,14 @@
                 }
             });
 
+            $("#follow").change(function() {
+                var flag = $(this).is(":checked");
+                if (flag) {
+                    player.enableFollow();
+                } else {
+                    player.disabledFollow();
+                }
+            });
             // player.play();
 
             function play() {
