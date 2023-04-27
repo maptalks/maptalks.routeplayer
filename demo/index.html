@@ -4,7 +4,8 @@
         <meta charset="UTF-8" />
         <title>maptalks.heat demo</title>
         <script src="https://unpkg.com/jquery@<3.3.1/dist/jquery.min.js"></script>
-        <script src="https://unpkg.com/maptalks@<2.0.0/dist/maptalks.min.js"></script>
+        <script src="../node_modules/maptalks/dist/maptalks.js"></script>
+        <script type="text/javascript" src="https://maptalks.com/api/maptalks-gl-layers.js"></script>
         <script src="../dist/maptalks.routeplayer.js"></script>
         <link
             type="text/css"
@@ -56,7 +57,7 @@
             </label>
         </div>
         <script>
-            var map = new maptalks.Map("map", {
+            const map = new maptalks.Map("map", {
                 center: [121.505, 31.2611],
                 zoom: 14,
                 attributionControl: {
@@ -70,18 +71,47 @@
                 })
             });
 
-            var player = new maptalks.RoutePlayer(route, map, {
-                    maxTrailLine: 10
+            route.path.forEach(c => {
+                c[4] = c[3];
+                c[3] = c[2];
+                c[2] = Math.random() * 100 + 100;
+            });
+            const player = new maptalks.RoutePlayer(route, map, {
+                    maxTrailLine: 10,
+                    markerSymbol: {
+                        markerOpacity: 0
+                    }
                 });
-            var unitTime = player.getUnitTime();
+            const unitTime = player.getUnitTime();
+            const gltflayer = new maptalks.GLTFLayer('gltf').addTo(map);
+            let gltfmarker = null;
             player.on("playing", function(param) {
                 if (
                     player.getCurrentProperties(0) !== undefined &&
                     player.getCurrentProperties(0) !== null
                 ) {
+                    console.log(param.time);
                     $("#info").text(
                         "current info: " + player.getCurrentProperties(0).info
                     );
+                    if (!gltfmarker) {
+                        gltfmarker = new maptalks.GLTFMarker(param.coordinate, {
+                            symbol: {
+                                url: 'gltf/suv.gltf',
+                                scaleX: 0.1,
+                                scaleY: 0.1,
+                                scaleZ: 0.1,
+                                rotationZ: param.rotationZ - 90,
+                                rotationX: param.rotationX
+                            }
+                        }).addTo(gltflayer);
+                    } else {
+                        gltfmarker.setCoordinates(param.coordinate);
+                        gltfmarker.updateSymbol({
+                            rotationZ: param.rotationZ - 90,
+                            rotationX: param.rotationX
+                        });
+                    }
                 }
             });
 
@@ -122,7 +152,7 @@
             }
 
             function speed(t) {
-                player.setUnitTime(unitTime * t);
+                player.setUnitTime(unitTime * t * 0.1);
             }
         </script>
     </body>

@@ -1,10 +1,10 @@
 /*!
  * maptalks.routeplayer v0.1.0
  * LICENSE : MIT
- * (c) 2016-2020 maptalks.org
+ * (c) 2016-2023 maptalks.org
  */
 /*!
- * requires maptalks@^0.23.0 
+ * requires maptalks@^1.0.0-rc.18 
  */
 import { Class, Coordinate, Eventable, INTERNAL_LAYER_PREFIX, LineString, Marker, Util, VectorLayer, animation } from 'maptalks';
 
@@ -18,6 +18,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
+var TEMP_COORD = new Coordinate([0, 0, 0]);
 var Route = function () {
     function Route(r) {
         _classCallCheck(this, Route);
@@ -33,9 +34,9 @@ var Route = function () {
         var idx = null;
         var payload = null;
         for (var i = 0, l = this.path.length; i < l; i++) {
-            if (t < this.path[i][2]) {
+            if (t < this.path[i][3]) {
                 idx = i;
-                payload = this.path[i][3];
+                payload = this.path[i][4];
                 break;
             }
         }
@@ -45,15 +46,19 @@ var Route = function () {
 
         var p1 = this.path[idx - 1],
             p2 = this.path[idx],
-            span = t - p1[2],
-            r = span / (p2[2] - p1[2]);
+            span = t - p1[3],
+            r = span / (p2[3] - p1[3]);
         var x = p1[0] + (p2[0] - p1[0]) * r,
             y = p1[1] + (p2[1] - p1[1]) * r,
-            coord = new Coordinate(x, y),
-            vp = map.coordinateToViewPoint(coord);
-        var degree = Util.computeDegree(map.coordinateToViewPoint(new Coordinate(p1)), vp);
+            z = p1[2] + (p2[2] - p1[2]) * r;
+        var res = map.getGLRes();
+        TEMP_COORD.x = x, TEMP_COORD.y = y, TEMP_COORD.z = z;
+        var vp = map.coordinateToPointAtRes(TEMP_COORD, res);
+        TEMP_COORD.x = p1[0], TEMP_COORD.y = p1[1], TEMP_COORD.z = p1[2];
+        var vp1 = map.coordinateToPointAtRes(TEMP_COORD, res);
+        var degree = Util.computeDegree(vp1.x, vp1.y, vp.x, vp.y);
         return {
-            coordinate: coord,
+            coordinate: new Coordinate(x, y, z),
             viewPoint: vp,
             degree: degree,
             index: idx,
@@ -62,11 +67,11 @@ var Route = function () {
     };
 
     Route.prototype.getStart = function getStart() {
-        return this.path[0][2];
+        return this.path[0][3];
     };
 
     Route.prototype.getEnd = function getEnd() {
-        return this.path[this.getCount() - 1][2];
+        return this.path[this.getCount() - 1][3];
     };
 
     Route.prototype.getCount = function getCount() {
@@ -227,6 +232,10 @@ var RoutePlayer = function (_maptalks$Eventable) {
         return this.startTime + this.played;
     };
 
+    RoutePlayer.prototype.getRoutes = function getRoutes() {
+        return this.routes;
+    };
+
     RoutePlayer.prototype.setTime = function setTime(t) {
         this.played = t - this.startTime;
         if (this.played < 0) {
@@ -271,6 +280,16 @@ var RoutePlayer = function (_maptalks$Eventable) {
             return this.routes[idx].markerSymbol;
         }
         return null;
+    };
+
+    RoutePlayer.prototype.getMarker = function getMarker(index) {
+        if (!index) {
+            index = 0;
+        }
+        if (!this.routes[index] || !this.routes[index]._painter) {
+            return null;
+        }
+        return this.routes[index]._painter.marker;
     };
 
     RoutePlayer.prototype.setMarkerSymbol = function setMarkerSymbol(idx, symbol) {
@@ -332,7 +351,14 @@ var RoutePlayer = function (_maptalks$Eventable) {
         for (var i = 0, l = this.routes.length; i < l; i++) {
             this._drawRoute(this.routes[i], this.startTime + this.played);
         }
-        this.fire('playing');
+        var position = this._calPositions();
+        if (position) {
+            var rotationX = position.rotationX,
+                rotationZ = position.rotationZ,
+                coordinate = position.coordinate;
+
+            this.fire('playing', { rotationX: rotationX, rotationZ: rotationZ, coordinate: coordinate, time: this.played });
+        }
     };
 
     RoutePlayer.prototype._drawRoute = function _drawRoute(route, t) {
@@ -361,8 +387,14 @@ var RoutePlayer = function (_maptalks$Eventable) {
             route._painter.marker.setCoordinates(coordinates.coordinate);
         }
         if (!route._painter.line) {
+            var altitudes = route.path.map(function (c) {
+                return c[2];
+            });
             var line = new LineString(route.path, {
-                symbol: route.lineSymbol || this.options['lineSymbol']
+                symbol: route.lineSymbol || this.options['lineSymbol'],
+                properties: {
+                    altitude: altitudes
+                }
             }).addTo(this.lineLayer);
 
             route._painter.line = line;
@@ -371,7 +403,10 @@ var RoutePlayer = function (_maptalks$Eventable) {
         if (!route._painter.trailLine) {
             this.trailLinePoints = [coordinates.coordinate];
             var trailLine = new LineString([], {
-                symbol: route.trailLineSymbol || this.options['trailLineSymbol']
+                symbol: route.trailLineSymbol || this.options['trailLineSymbol'],
+                properties: {
+                    altitude: [coordinates.altitude]
+                }
             }).addTo(this.trailLineLayer);
             route._painter.trailLine = trailLine;
         } else {
@@ -379,12 +414,39 @@ var RoutePlayer = function (_maptalks$Eventable) {
             var maxLineCount = this.options['maxTrailLine'];
             if (maxLineCount !== 0 && this.trailLinePoints.length > maxLineCount) {
                 this.trailLinePoints.shift();
+                var _altitudes = route._painter.trailLine.getProperties().altitude;
+                _altitudes.shift();
             }
 
             this.trailLinePoints.push(coordinates.coordinate);
             if (this.trailLinePoints.length > 1) {
                 route._painter.trailLine.setCoordinates(this.trailLinePoints);
+                var _altitudes2 = route._painter.trailLine.getProperties().altitude;
+                _altitudes2.push(coordinates.altitude);
             }
+        }
+    };
+
+    RoutePlayer.prototype._calPositions = function _calPositions() {
+        if (this.trailLinePoints && this.trailLinePoints.length > 1) {
+            var len = this.trailLinePoints.length;
+            var currentCoordinate = this.trailLinePoints[len - 1];
+            var lastCoordinate = this.trailLinePoints[len - 2];
+            var res = this._map.getGLRes();
+            var currentPoint = this._map.coordinateToPointAtRes(currentCoordinate, res);
+            var lastPoint = this._map.coordinateToPointAtRes(lastCoordinate, res);
+            var angleZ = Util.computeDegree(currentPoint.x, currentPoint.y, lastPoint.x, lastPoint.y);
+            var z0 = this._map.altitudeToPoint(currentCoordinate.z, res);
+            var z1 = this._map.altitudeToPoint(lastCoordinate.z, res);
+            var angleY = Util.computeDegree(lastPoint.x, z1, currentPoint.x, z0);
+            var rotationZ = angleZ / Math.PI * 180;
+            var rotationX = angleY / Math.PI * 180;
+            if (currentCoordinate.x >= lastCoordinate.x) {
+                rotationX = -rotationX;
+            } else {
+                rotationX += 180;
+            }
+            return { rotationZ: rotationZ, rotationX: rotationX, coordinate: currentCoordinate };
         }
     };
 
@@ -432,8 +494,8 @@ var RoutePlayer = function (_maptalks$Eventable) {
     };
 
     RoutePlayer.prototype._createLayers = function _createLayers() {
-        this.lineLayer = new VectorLayer(INTERNAL_LAYER_PREFIX + '_routeplay_r_' + this.id, [], { visible: this.options['showRoutes'], enableSimplify: false }).addTo(this._map);
-        this.trailLineLayer = new VectorLayer(INTERNAL_LAYER_PREFIX + '_routeplay_t_' + this.id, [], { visible: this.options['showTrail'], enableSimplify: false }).addTo(this._map);
+        this.lineLayer = new VectorLayer(INTERNAL_LAYER_PREFIX + '_routeplay_r_' + this.id, [], { visible: this.options['showRoutes'], enableSimplify: false, enableAltitude: true }).addTo(this._map);
+        this.trailLineLayer = new VectorLayer(INTERNAL_LAYER_PREFIX + '_routeplay_t_' + this.id, [], { visible: this.options['showTrail'], enableSimplify: false, enableAltitude: true }).addTo(this._map);
         this.markerLayer = new VectorLayer(INTERNAL_LAYER_PREFIX + '_routeplay_m_' + this.id).addTo(this._map);
     };
 
@@ -444,4 +506,4 @@ RoutePlayer.mergeOptions(options);
 
 export { Route, RoutePlayer };
 
-typeof console !== 'undefined' && console.log('maptalks.routeplayer v0.1.0, requires maptalks@^0.23.0.');
+typeof console !== 'undefined' && console.log('maptalks.routeplayer v0.1.0, requires maptalks@^1.0.0-rc.18.');
