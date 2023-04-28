@@ -130,7 +130,7 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
         if (!this.markerLayer) {
             return this;
         }
-        this.finish();
+        this.player.playState = 'finished';
         this.markerLayer.remove();
         this.lineLayer.remove();
         this.trailLineLayer.remove();
@@ -448,7 +448,7 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
         const duration =
         (this.duration - this.played) / this.options['unitTime'];
         let framer;
-        const renderer = this._map._getRenderer();
+        const renderer = this._map['_getRenderer']();
         if (renderer.callInFrameLoop) {
             framer = function (fn) {
                 renderer.callInFrameLoop(fn);
