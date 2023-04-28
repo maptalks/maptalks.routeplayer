@@ -1,5 +1,5 @@
 describe('routeplayer', function () {
-    let container, map;
+    let container, map, player;
     beforeEach(function () {
         container = document.createElement('div');
         container.style.width = '400px';
@@ -12,6 +12,7 @@ describe('routeplayer', function () {
     });
 
     afterEach(function () {
+        player.remove();
         map.remove();
         maptalks.DomUtil.removeDomNode(container);
     });
@@ -26,8 +27,8 @@ describe('routeplayer', function () {
             ]
         };
 
-    it('ok', function (done) {
-        const player = new maptalks.RoutePlayer(route, map, {
+    it('get player\'s position when playing', function (done) {
+        player = new maptalks.RoutePlayer(route, map, {
             maxTrailLine: 10,
             markerSymbol: {
                 markerOpacity: 0
@@ -42,5 +43,29 @@ describe('routeplayer', function () {
             }
         });
         player.play();
+    });
+
+    it('get player\'s info', function (done) {
+        player = new maptalks.RoutePlayer(route, map, {
+        });
+        player.on("playing", function(param) {
+            if (param.time < 780000 && param.time > 540000) {
+                expect(player.getCurrentProperties(0).info).to.be.eql('test4');
+                done();
+            }
+        });
+        player.play();
+    });
+
+    it('playpause event', function (done) {
+        player = new maptalks.RoutePlayer(route, map, {
+        });
+        player.play();
+        player.on("playpause", function() {
+            done();
+        });
+        setTimeout(function() {
+            player.pause();
+        }, 200);
     });
 });
