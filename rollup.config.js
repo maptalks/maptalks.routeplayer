@@ -1,6 +1,5 @@
 const { nodeResolve: resolve } = require('@rollup/plugin-node-resolve');
 const commonjs = require('@rollup/plugin-commonjs');
-const babel = require('@rollup/plugin-babel');
 const terser = require('rollup-plugin-terser').terser;
 const pkg = require('./package.json');
 
@@ -43,8 +42,8 @@ const basePlugins = [
 module.exports = [
     {
         input: 'index.js',
-        external: ['maptalks'],
-        plugins: basePlugins.concat([babel()]).concat(plugins),
+        external: ['maptalks', '@maptalks/gl-layers'],
+        plugins: basePlugins.concat(plugins),
         output: {
             globals: {
                 'maptalks': 'maptalks'
@@ -71,7 +70,7 @@ module.exports = [
                 }
             })
         ] : []),
-        external: ['maptalks'],
+        external: ['maptalks', '@maptalks/gl-layers'],
         output: {
             globals: {
                 'maptalks': 'maptalks'

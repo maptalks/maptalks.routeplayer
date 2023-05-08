@@ -1,5 +1,5 @@
 describe('routeplayer', function () {
-    let container, map, player;
+    let container, map, player, groupgllayer;
     beforeEach(function () {
         container = document.createElement('div');
         container.style.width = '400px';
@@ -9,6 +9,7 @@ describe('routeplayer', function () {
             center : [121.505, 31.2611],
             zoom : 14
         });
+        groupgllayer = new maptalks.GroupGLLayer("group", []).addTo(map);
     });
 
     afterEach(function () {
@@ -28,17 +29,17 @@ describe('routeplayer', function () {
         };
 
     it('get player\'s position when playing', function (done) {
-        player = new maptalks.RoutePlayer(route, map, {
+        player = new maptalks.RoutePlayer(route, groupgllayer, {
             maxTrailLine: 10,
             markerSymbol: {
                 markerOpacity: 0
             }
         });
         player.on("playing", function(param) {
-            const { rotationX, rotationZ } = param;
+            const { pitch, bearing } = param;
             if (param.time < 780000 && param.time > 540000) {
-                expect(rotationX.toFixed(6)).to.be.eql(-1.597199);
-                expect(rotationZ.toFixed(3)).to.be.eql(149.381);
+                expect(pitch.toFixed(4)).to.be.eql(1.3746);
+                expect(bearing.toFixed(3)).to.be.eql(149.381);
                 done();
             }
         });
@@ -46,7 +47,7 @@ describe('routeplayer', function () {
     });
 
     it('get player\'s info', function (done) {
-        player = new maptalks.RoutePlayer(route, map, {
+        player = new maptalks.RoutePlayer(route, groupgllayer, {
         });
         player.on("playing", function(param) {
             if (param.time < 780000 && param.time > 540000) {
@@ -58,7 +59,7 @@ describe('routeplayer', function () {
     });
 
     it('playpause event', function (done) {
-        player = new maptalks.RoutePlayer(route, map, {
+        player = new maptalks.RoutePlayer(route, groupgllayer, {
         });
         player.play();
         player.on("playpause", function() {
@@ -67,5 +68,53 @@ describe('routeplayer', function () {
         setTimeout(function() {
             player.pause();
         }, 200);
+    });
+
+    it('play and then finish', function (done) {
+        player = new maptalks.RoutePlayer(route, groupgllayer, {
+        });
+        player.play();
+        player.on("playfinish", function(param) {
+            const { pitch, bearing, coordinate } = param;
+            expect(pitch).to.be.eql(357.3061768305339);
+            expect(bearing).to.be.eql(87.03906385937773);
+            expect(coordinate.x).to.be.eql(121.483742875808);
+            expect(coordinate.y).to.be.eql(31.2617424212607);
+            expect(coordinate.z).to.be.eql(105);
+            done();
+        });
+        setTimeout(function() {
+            player.finish();
+        }, 200);
+    });
+
+    it('play and then cancel', function (done) {
+        player = new maptalks.RoutePlayer(route, groupgllayer, {
+        });
+        player.play();
+        player.on("playcancel", function(param) {
+            const { pitch, bearing, coordinate } = param;
+            expect(pitch).to.be.eql(2.5986362164469186);
+            expect(bearing).to.be.eql(-147.89374404407715);
+            expect(coordinate.x).to.be.eql(121.475031060928);
+            expect(coordinate.y).to.be.eql(31.2611187865471);
+            expect(coordinate.z).to.be.eql(100);
+            done();
+        });
+        setTimeout(function() {
+            player.cancel();
+        }, 200);
+    });
+
+    it('add more than one routeplayer', function (done) {
+        player = new maptalks.RoutePlayer(route, groupgllayer, {
+        });
+        player.play();
+        const newPlayer = new maptalks.RoutePlayer(route, groupgllayer);
+        newPlayer.play();
+        setTimeout(function() {
+            newPlayer.remove();
+            done();
+        }, 100);
     });
 });

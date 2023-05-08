@@ -2,15 +2,15 @@
 <html>
     <head>
         <meta charset="UTF-8" />
-        <title>maptalks.heat demo</title>
+        <title>routeplayer demo</title>
         <script src="https://unpkg.com/jquery@<3.3.1/dist/jquery.min.js"></script>
         <script src="../node_modules/maptalks/dist/maptalks.js"></script>
-        <script type="text/javascript" src="https://maptalks.com/api/maptalks-gl-layers.js"></script>
-        <script src="../dist/maptalks.routeplayer.js"></script>
+        <script type="text/javascript" src="https://unpkg.com/@maptalks/gl-layers/dist/maptalks-gl-layers.js"></script>
+        <script src="../dist/maptalks.routeplayer-dev.js"></script>
         <link
             type="text/css"
             rel="stylesheet"
-            href="https://unpkg.com/maptalks@<2.0.0/dist/maptalks.css"
+            href="https://unpkg.com/maptalks/dist/maptalks.css"
         />
         <script src="route.js"></script>
         <style>
@@ -60,37 +60,39 @@
             const map = new maptalks.Map("map", {
                 center: [121.505, 31.2611],
                 zoom: 14,
+                dragRotate: false,
                 attributionControl: {
                     content:
                         '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, &copy; <a href="https://carto.com/attributions">CARTO</a>'
                 },
                 baseLayer: new maptalks.TileLayer("base", {
-                    urlTemplate:
-                        "http://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}.png",
-                    subdomains: ["a", "b", "c", "d", "e"]
+                    urlTemplate: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
+                    subdomains: ["a","b","c","d"]
                 })
             });
-
             route.path.forEach(c => {
                 c[4] = c[3];
                 c[3] = c[2];
                 c[2] = Math.random() * 100 + 100;
             });
-            const player = new maptalks.RoutePlayer(route, map, {
+            const groupLayer = new maptalks.GroupGLLayer("group", []).addTo(map);
+            const player = new maptalks.RoutePlayer(route, groupLayer, {
                     maxTrailLine: 10,
-                    markerSymbol: {
-                        markerOpacity: 0
+                    showTrail: false,
+                    showMarker: false,
+                    lineSymbol: {
+                        lineColor: '#f0f',
+                        lineWidth: 1
                     }
                 });
             const unitTime = player.getUnitTime();
-            const gltflayer = new maptalks.GLTFLayer('gltf').addTo(map);
+            const gltflayer = new maptalks.GLTFLayer('gltf').addTo(groupLayer);
             let gltfmarker = null;
             player.on("playing", function(param) {
                 if (
                     player.getCurrentProperties(0) !== undefined &&
                     player.getCurrentProperties(0) !== null
                 ) {
-                    console.log(param.time);
                     $("#info").text(
                         "current info: " + player.getCurrentProperties(0).info
                     );
@@ -101,17 +103,27 @@
                                 scaleX: 0.1,
                                 scaleY: 0.1,
                                 scaleZ: 0.1,
-                                rotationZ: param.rotationZ - 90,
-                                rotationX: param.rotationX
+                                rotationZ: param.bearing - 90,
+                                rotationX: -param.pitch
                             }
                         }).addTo(gltflayer);
                     } else {
                         gltfmarker.setCoordinates(param.coordinate);
                         gltfmarker.updateSymbol({
-                            rotationZ: param.rotationZ - 90,
-                            rotationX: param.rotationX
+                            rotationZ: param.bearing - 90,
+                            rotationX: -param.pitch
                         });
                     }
+                }
+            });
+
+            player.on('playcancel playfinish', param => {
+                if (gltfmarker) {
+                    gltfmarker.setCoordinates(param.coordinate);
+                    gltfmarker.updateSymbol({
+                        rotationZ: param.bearing - 90,
+                        rotationX: -param.pitch
+                    });
                 }
             });
 

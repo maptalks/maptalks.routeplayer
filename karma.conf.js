@@ -10,6 +10,7 @@ module.exports = function (config) {
         },
         files: [
             'node_modules/maptalks/dist/maptalks.js',
+            'node_modules/@maptalks/gl-layers/dist/maptalks-gl-layers.js',
             'dist/' + pkg.name + '.js',
             'test/**/*.js'
         ],
