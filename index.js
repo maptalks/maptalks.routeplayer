@@ -1,6 +1,7 @@
 import * as maptalks from 'maptalks';
 
 const TEMP_COORD = new maptalks.Coordinate([0, 0, 0]);
+const TEMP_POINT1 = new maptalks.Point(0, 0), TEMP_POINT2 = new maptalks.Point(0, 0), TEMP_VEC_A = [], TEMP_VEC_B = [];
 export class Route {
     constructor(r) {
         this.route = r;
@@ -32,9 +33,9 @@ export class Route {
             y = p1[1] + (p2[1] - p1[1]) * r,
             z = p1[2] + (p2[2] - p1[2]) * r;
         const res = map.getGLRes();
-        TEMP_COORD.x = x, TEMP_COORD.y = y, TEMP_COORD.z = z;
+        TEMP_COORD.set(x, y, z);
         const vp = map.coordinateToPointAtRes(TEMP_COORD, res);
-        TEMP_COORD.x = p1[0], TEMP_COORD.y = p1[1], TEMP_COORD.z = p1[2];
+        TEMP_COORD.set(p1[0], p1[1], p1[2]);
         const vp1 = map.coordinateToPointAtRes(TEMP_COORD, res);
         const degree = maptalks.Util.computeDegree(
             vp1.x, vp1.y,
@@ -99,6 +100,7 @@ const options = {
     unitTime: 1 * 1000,
     showRoutes: true,
     showTrail: true,
+    showMarker: true,
     maxTrailLine: 0,
     markerSymbol: null,
     lineSymbol: {
@@ -116,14 +118,21 @@ const options = {
 };
 
 export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
-    constructor(routes, map, opts) {
+    constructor(routes, groupgllayer, opts) {
         super(opts);
         if (!Array.isArray(routes)) {
             routes = [routes];
         }
         this.id = maptalks.Util.UID();
-        this._map = map;
+        this._gllayer = groupgllayer;
         this._setup(routes);
+    }
+
+    get map() {
+        if (this._gllayer) {
+            return this._gllayer.getMap();
+        }
+        return null;
     }
 
     remove() {
@@ -137,7 +146,7 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
         delete this.markerLayer;
         delete this.lineLayer;
         delete this.trailLineLayer;
-        delete this._map;
+        delete this._gllayer;
         return this;
     }
 
@@ -164,11 +173,12 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
         this.played = 0;
         this.trailLinePoints = [];
         let line = this.trailLineLayer.getGeometries()[0];
-        if (line !== undefined)
+        if (line !== undefined && this.options['showTrail'])
             line.setCoordinates(this.trailLinePoints);
         this._createPlayer();
         this._step({ styles: { t: 0 }});
-        this.fire('playcancel');
+        const param = this._getParam('playcancel');
+        this.fire('playcancel', param);
         return this;
     }
 
@@ -176,19 +186,26 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
         if (this.player.playState === 'finished') {
             return this;
         }
-
-        // complete trail line
-        let line = this.trailLineLayer.getGeometries()[0];
-        let coors = this.routes[0].path.map(item=>{
-            return [item[0], item[1]];
-        });
-        this.trailLinePoints = coors;
-        line.setCoordinates(this.trailLinePoints);
-
         this.player.finish();
         this._step({ styles: { t: 1 }});
-        this.fire('playfinish');
         return this;
+    }
+
+    _getParam(type) {
+        const route = this.lineLayer.getGeometries()[0];
+        const param = {};
+        if (route) {
+            const coordinates = route.getCoordinates();
+            let idx = 0;
+            if (type === 'playfinish') {
+                idx = coordinates.length - 2;
+            }
+            const position = this._calPositions(coordinates[idx + 1], coordinates[idx]);
+            param['bearing'] = position.bearing;
+            param['pitch'] = position.pitch;
+            param['coordinate'] = type === 'playfinish' ? coordinates[idx + 1] : coordinates[idx];
+        }
+        return param;
     }
 
     getStartTime() {
@@ -317,7 +334,8 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
     _step(frame) {
         if (frame.state && frame.state.playState !== 'running') {
             if (frame.state.playState === 'finished') {
-                this.fire('playfinish');
+                const param = this._getParam('playfinish');
+                this.fire('playfinish', param);
             }
             return;
         }
@@ -325,18 +343,21 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
         for (let i = 0, l = this.routes.length; i < l; i++) {
             this._drawRoute(this.routes[i], this.startTime + this.played);
         }
-        const position = this._calPositions();
-        if (position) {
-            const { rotationX, rotationZ, coordinate } = position;
-            this.fire('playing', { rotationX, rotationZ, coordinate, time: this.played });
+        if (this.trailLinePoints && this.trailLinePoints.length > 2) {
+            const len = this.trailLinePoints.length;
+            const currentCoordinate = this.trailLinePoints[len - 1];
+            const lastCoordinate = this.trailLinePoints[len - 3];
+            const position = this._calPositions(currentCoordinate, lastCoordinate);
+            const { pitch, bearing, coordinate } = position;
+            this.fire('playing', { pitch, bearing, coordinate, time: this.played });
         }
     }
 
     _drawRoute(route, t) {
-        if (!this._map) {
+        if (!this.map) {
             return;
         }
-        const coordinates = route.getCoordinates(t, this._map);
+        const coordinates = route.getCoordinates(t, this.map);
 
         if (!coordinates) {
             if (route._painter && route._painter.marker) {
@@ -358,14 +379,8 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
             route._painter.marker.setCoordinates(coordinates.coordinate);
         }
         if (!route._painter.line) {
-            const altitudes = route.path.map(c => {
-                return c[2];
-            });
             const line = new maptalks.LineString(route.path, {
-                symbol: route.lineSymbol || this.options['lineSymbol'],
-                properties: {
-                    altitude: altitudes
-                }
+                symbol: route.lineSymbol || this.options['lineSymbol']
             }).addTo(this.lineLayer);
 
             route._painter.line = line;
@@ -374,51 +389,38 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
         if (!route._painter.trailLine) {
             this.trailLinePoints = [coordinates.coordinate];
             const trailLine = new maptalks.LineString([], {
-                symbol: route.trailLineSymbol || this.options['trailLineSymbol'],
-                properties: {
-                    altitude: [coordinates.altitude]
-                }
+                symbol: route.trailLineSymbol || this.options['trailLineSymbol']
             }).addTo(this.trailLineLayer);
             route._painter.trailLine = trailLine;
         } else {
             // remove extra trail point by maxTrailLine, 0 => disable
+            this.trailLinePoints.push(coordinates.coordinate);
             const maxLineCount = this.options['maxTrailLine'];
             if (maxLineCount !== 0 && this.trailLinePoints.length > maxLineCount) {
                 this.trailLinePoints.shift();
-                const altitudes = route._painter.trailLine.getProperties().altitude;
-                altitudes.shift();
             }
-
-            this.trailLinePoints.push(coordinates.coordinate);
-            if (this.trailLinePoints.length > 1) {
+            if (this.trailLinePoints.length > 1 && this.options['showTrail']) {
                 route._painter.trailLine.setCoordinates(this.trailLinePoints);
-                const altitudes = route._painter.trailLine.getProperties().altitude;
-                altitudes.push(coordinates.altitude);
             }
         }
     }
 
-    _calPositions() {
-        if (this.trailLinePoints && this.trailLinePoints.length > 1) {
-            const len = this.trailLinePoints.length;
-            const currentCoordinate = this.trailLinePoints[len - 1];
-            const lastCoordinate = this.trailLinePoints[len - 2];
-            const res = this._map.getGLRes();
-            const currentPoint = this._map.coordinateToPointAtRes(currentCoordinate, res);
-            const lastPoint = this._map.coordinateToPointAtRes(lastCoordinate, res);
-            const angleZ = maptalks.Util.computeDegree(currentPoint.x, currentPoint.y, lastPoint.x, lastPoint.y);
-            const z0 = this._map.altitudeToPoint(currentCoordinate.z, res);
-            const z1 = this._map.altitudeToPoint(lastCoordinate.z, res);
-            const angleY = maptalks.Util.computeDegree(lastPoint.x, z1, currentPoint.x, z0);
-            const rotationZ = angleZ / Math.PI * 180;
-            let rotationX = angleY / Math.PI * 180;
-            if (currentCoordinate.x >= lastCoordinate.x) {
-                rotationX = -rotationX;
-            } else {
-                rotationX += 180;
-            }
-            return { rotationZ, rotationX, coordinate: currentCoordinate };
+    _calPositions(currentCoordinate, lastCoordinate) {
+        const res = this.map.getGLRes();
+        const currentPoint = this.map.coordinateToPointAtRes(currentCoordinate, res, TEMP_POINT1);
+        const lastPoint = this.map.coordinateToPointAtRes(lastCoordinate, res, TEMP_POINT2);
+        let bearing = maptalks.Util.computeDegree(currentPoint.x, currentPoint.y, lastPoint.x, lastPoint.y);
+        const z0 = this.map.altitudeToPoint(currentCoordinate.z, res);
+        const z1 = this.map.altitudeToPoint(lastCoordinate.z, res);
+        const v0 = vector3(TEMP_VEC_A, currentPoint.x - lastPoint.x, currentPoint.y - lastPoint.y, 0);
+        const v1 = vector3(TEMP_VEC_B, currentPoint.x - lastPoint.x, currentPoint.y - lastPoint.y, z0 - z1);
+        let pitch = angleVector(v0, v1);
+        if (v1[2] < 0) {
+            pitch = Math.PI * 2 - pitch;
         }
+        bearing = bearing / Math.PI * 180;
+        pitch = pitch / Math.PI * 180;
+        return { bearing, pitch, coordinate: currentCoordinate };
     }
 
     _setup(rs) {
@@ -448,7 +450,7 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
         const duration =
         (this.duration - this.played) / this.options['unitTime'];
         let framer;
-        const renderer = this._map['_getRenderer']();
+        const renderer = this.map.getRenderer();
         if (renderer.callInFrameLoop) {
             framer = function (fn) {
                 renderer.callInFrameLoop(fn);
@@ -468,16 +470,40 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
     }
 
     _createLayers() {
-        this.lineLayer = new maptalks.VectorLayer(
-            maptalks.INTERNAL_LAYER_PREFIX + '_routeplay_r_' + this.id, [], { visible:this.options['showRoutes'], enableSimplify:false, enableAltitude: true }
-        ).addTo(this._map);
-        this.trailLineLayer = new maptalks.VectorLayer(
-            maptalks.INTERNAL_LAYER_PREFIX + '_routeplay_t_' + this.id, [], { visible:this.options['showTrail'], enableSimplify:false, enableAltitude: true }
-        ).addTo(this._map);
-        this.markerLayer = new maptalks.VectorLayer(
-            maptalks.INTERNAL_LAYER_PREFIX + '_routeplay_m_' + this.id
-        ).addTo(this._map);
+        this.lineLayer = new maptalks.LineStringLayer(
+            maptalks.INTERNAL_LAYER_PREFIX + '_routeplay_r_' + this.id, [], { visible:this.options['showRoutes'], enableSimplify:false }
+        ).addTo(this._gllayer);
+        this.trailLineLayer = new maptalks.LineStringLayer(
+            maptalks.INTERNAL_LAYER_PREFIX + '_routeplay_t_' + this.id, [], { visible:this.options['showTrail'], enableSimplify:false }
+        ).addTo(this._gllayer);
+        this.markerLayer = new maptalks.PointLayer(
+            maptalks.INTERNAL_LAYER_PREFIX + '_routeplay_m_' + this.id, [], { visible:this.options['showMarker'] }
+        ).addTo(this._gllayer);
     }
 }
 
+function vector3(out, x, y, z) {
+    out[0] = x;
+    out[1] = y;
+    out[2] = z;
+    return out;
+}
+
+function angleVector(a, b) {
+    let ax = a[0],
+      ay = a[1],
+      az = a[2],
+      bx = b[0],
+      by = b[1],
+      bz = b[2],
+      mag1 = Math.sqrt(ax * ax + ay * ay + az * az),
+      mag2 = Math.sqrt(bx * bx + by * by + bz * bz),
+      mag = mag1 * mag2,
+      cosine = mag && dot(a, b) / mag;
+    return Math.acos(Math.min(Math.max(cosine, -1), 1));
+}
+
+function dot(a, b) {
+    return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+}
 RoutePlayer.mergeOptions(options);
