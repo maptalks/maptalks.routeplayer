@@ -5,6 +5,8 @@
 .tern-port
 doc/
 
+dist/
+
 ### *tags
 GPATH
 GRTAGS
