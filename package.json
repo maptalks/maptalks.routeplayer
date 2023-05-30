@@ -1,6 +1,6 @@
 {
   "name": "maptalks.routeplayer",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Route Player plugin for maptalks.js",
   "license": "MIT",
   "repository": {
@@ -51,6 +51,5 @@
     "rollup": "^2.56.2",
     "rollup-plugin-terser": "^5.3.1"
   },
-  "dependencies": {
-  }
+  "dependencies": {}
 }
