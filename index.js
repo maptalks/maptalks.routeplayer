@@ -1,4 +1,5 @@
 import * as maptalks from 'maptalks';
+import { LineStringLayer, PointLayer } from '@maptalks/gl-layers';
 
 const TEMP_COORD = new maptalks.Coordinate([0, 0, 0]);
 const TEMP_POINT1 = new maptalks.Point(0, 0), TEMP_POINT2 = new maptalks.Point(0, 0), TEMP_VEC_A = [], TEMP_VEC_B = [];
@@ -470,13 +471,13 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
     }
 
     _createLayers() {
-        this.lineLayer = new maptalks.LineStringLayer(
+        this.lineLayer = new LineStringLayer(
             maptalks.INTERNAL_LAYER_PREFIX + '_routeplay_r_' + this.id, [], { visible:this.options['showRoutes'], enableSimplify:false }
         ).addTo(this._gllayer);
-        this.trailLineLayer = new maptalks.LineStringLayer(
+        this.trailLineLayer = new LineStringLayer(
             maptalks.INTERNAL_LAYER_PREFIX + '_routeplay_t_' + this.id, [], { visible:this.options['showTrail'], enableSimplify:false }
         ).addTo(this._gllayer);
-        this.markerLayer = new maptalks.PointLayer(
+        this.markerLayer = new PointLayer(
             maptalks.INTERNAL_LAYER_PREFIX + '_routeplay_m_' + this.id, [], { visible:this.options['showMarker'] }
         ).addTo(this._gllayer);
     }

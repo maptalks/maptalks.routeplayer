@@ -46,7 +46,8 @@ module.exports = [
         plugins: basePlugins.concat(plugins),
         output: {
             globals: {
-                'maptalks': 'maptalks'
+                'maptalks': 'maptalks',
+                '@maptalks/gl-layers': 'maptalks'
             },
             'sourcemap': production ? false : 'inline',
             'format': 'umd',
@@ -73,7 +74,8 @@ module.exports = [
         external: ['maptalks', '@maptalks/gl-layers'],
         output: {
             globals: {
-                'maptalks': 'maptalks'
+                'maptalks': 'maptalks',
+                '@maptalks/gl-layers': 'maptalks'
             },
             'sourcemap': false,
             'format': 'es',
