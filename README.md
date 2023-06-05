@@ -2,7 +2,7 @@
 
 [![NPM Version](https://img.shields.io/npm/v/maptalks.routeplayer.svg)](https://github.com/maptalks/maptalks.routeplayer)
 
-Route Player plugin for maptalks.js based on [VectorLayer](http://maptalks.org/maptalks.js/api/0.x/VectorLayer.html).
+Route Player plugin for maptalks.js based on [VectorLayer](http://maptalks.org/maptalks.js/api/0.x/VectorLayer.html) and also in 3D scene in GroupGLLayer.
 
 ![screenshot](https://user-images.githubusercontent.com/13678919/45591786-16929580-b98e-11e8-95fe-83ee73a15d1b.png)
 
@@ -43,14 +43,28 @@ player.play();
 
 ## API Reference
 
-### `Constructor`
+### `RoutePlayer`
 
 ```javascript
-new maptalks.RoutePlayer(route, map)
+new maptalks.RoutePlayer(route, map, options)
 ```
 
 * route **Object[]** an object array containing routes data
 * map **Map** maptalks map instance
+* options **Object** options
+    * unitTime **Number** unit time for 1ms in player, default is 1000ms
+    * showRoutes **Boolean** Whether to show routes during playing
+
+### `Route3DPlayer`
+
+```javascript
+new maptalks.Route3DPlayer(route, groupGLLayer, options)
+```
+
+For route play in 3D scene.
+
+* route **Object[]** an object array containing routes data
+* groupGLLayer **GroupGLLayer** groupGLLayer, imported from `@maptalks/gl-layers`
 * options **Object** options
     * unitTime **Number** unit time for 1ms in player, default is 1000ms
     * showRoutes **Boolean** Whether to show routes during playing
