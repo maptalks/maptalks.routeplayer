@@ -119,21 +119,21 @@ const options = {
 };
 
 export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
-    constructor(routes, groupgllayer, opts) {
+    constructor(routes, container, opts) {
         super(opts);
         if (!Array.isArray(routes)) {
             routes = [routes];
         }
         this.id = maptalks.Util.UID();
-        this._gllayer = groupgllayer;
+        this.container = container;
         this._setup(routes);
     }
 
     get map() {
-        if (this._gllayer) {
-            return this._gllayer.getMap();
+        if (this.container.getMap) {
+            return this.container.getMap();
         }
-        return null;
+        return this.container;
     }
 
     remove() {
@@ -147,7 +147,7 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
         delete this.markerLayer;
         delete this.lineLayer;
         delete this.trailLineLayer;
-        delete this._gllayer;
+        delete this.container;
         return this;
     }
 
@@ -471,16 +471,31 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
     }
 
     _createLayers() {
+        this.lineLayer = new maptalks.VectorLayer(
+            maptalks.INTERNAL_LAYER_PREFIX + '_routeplay_r_' + this.id, [], { visible:this.options['showRoutes'], enableSimplify:false }
+        ).addTo(this.container);
+        this.trailLineLayer = new maptalks.VectorLayer(
+            maptalks.INTERNAL_LAYER_PREFIX + '_routeplay_t_' + this.id, [], { visible:this.options['showTrail'], enableSimplify:false }
+        ).addTo(this.container);
+        this.markerLayer = new maptalks.VectorLayer(
+            maptalks.INTERNAL_LAYER_PREFIX + '_routeplay_m_' + this.id, [], { visible:this.options['showMarker'] }
+        ).addTo(this.container);
+    }
+}
+
+export class Route3DPlayer extends RoutePlayer {
+    _createLayers() {
         this.lineLayer = new LineStringLayer(
             maptalks.INTERNAL_LAYER_PREFIX + '_routeplay_r_' + this.id, [], { visible:this.options['showRoutes'], enableSimplify:false }
-        ).addTo(this._gllayer);
+        ).addTo(this.container);
         this.trailLineLayer = new LineStringLayer(
             maptalks.INTERNAL_LAYER_PREFIX + '_routeplay_t_' + this.id, [], { visible:this.options['showTrail'], enableSimplify:false }
-        ).addTo(this._gllayer);
+        ).addTo(this.container);
         this.markerLayer = new PointLayer(
             maptalks.INTERNAL_LAYER_PREFIX + '_routeplay_m_' + this.id, [], { visible:this.options['showMarker'] }
-        ).addTo(this._gllayer);
+        ).addTo(this.container);
     }
+
 }
 
 function vector3(out, x, y, z) {
