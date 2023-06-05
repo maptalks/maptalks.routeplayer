@@ -76,7 +76,7 @@
                 c[2] = Math.random() * 100 + 100;
             });
             const groupLayer = new maptalks.GroupGLLayer("group", []).addTo(map);
-            const player = new maptalks.RoutePlayer(route, groupLayer, {
+            const player = new maptalks.Route3DPlayer(route, groupLayer, {
                     maxTrailLine: 10,
                     showTrail: false,
                     showMarker: false,
