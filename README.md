@@ -18,6 +18,8 @@ Route Player plugin for maptalks.js based on [VectorLayer](http://maptalks.org/m
 ## Usage
 
 As a plugin, ```maptalks.routeplayer``` must be loaded after ```maptalks.js``` in browsers.
+
+### HTML
 ```html
 <script type="text/javascript" src="https://unpkg.com/maptalks/dist/maptalks.min.js"></script>
 <script type="text/javascript" src="https://unpkg.com/maptalks.routeplayer/dist/maptalks.routeplayer.js"></script>
@@ -40,7 +42,9 @@ player.play();
 </script>
 ```
 
-```ESM
+### ESM
+
+```js
 import { RoutePlayer, Route3DPlayer } from 'maptalks.routeplayer';
 
 const player = new RoutePlayer(route, map);
