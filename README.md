@@ -22,7 +22,7 @@ As a plugin, ```maptalks.routeplayer``` must be loaded after ```maptalks.js``` i
 <script type="text/javascript" src="https://unpkg.com/maptalks/dist/maptalks.min.js"></script>
 <script type="text/javascript" src="https://unpkg.com/maptalks.routeplayer/dist/maptalks.routeplayer.js"></script>
 <script>
-var route = [
+const route = [
     {
         "path" : [
             //[x, y, time]
@@ -35,9 +35,16 @@ var route = [
         "lineSymbol" : { lineColor : '#f00' }
     }
 ];
-var player = new maptalks.RoutePlayer(route, map);
+const player = new maptalks.RoutePlayer(route, map);
 player.play();
 </script>
+```
+
+```ESM
+import { RoutePlayer, Route3DPlayer } from 'maptalks.routeplayer';
+
+const player = new RoutePlayer(route, map);
+const player3d = new Route3DPlayer(route, groupGLLayer);
 ```
 
 ## API Reference
@@ -45,7 +52,7 @@ player.play();
 ### `RoutePlayer`
 
 ```javascript
-new maptalks.RoutePlayer(route, map, options)
+new RoutePlayer(route, map, options)
 ```
 
 * route **Object[]** an object array containing routes data
@@ -57,7 +64,7 @@ new maptalks.RoutePlayer(route, map, options)
 ### `Route3DPlayer`
 
 ```javascript
-new maptalks.Route3DPlayer(route, groupGLLayer, options)
+new Route3DPlayer(route, groupGLLayer, options)
 ```
 
 For route play in 3D scene.
