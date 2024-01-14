@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html>
+<meta charset='UTF-8' />
+<meta name='viewport' content='width=device-width, initial-scale=1' />
+<title>地图 - 显示</title>
+<link rel="stylesheet" href="./style.css" />
+<link rel='stylesheet' href='https://maptalks.com/api/maptalks.css' />
+<script type='text/javascript' src='https://maptalks.com/api/maptalks.min.js'></script>
+<script type='text/javascript' src='https://maptalks.com/api/maptalks-gl-layers.js'></script>
+<script type='text/javascript' src='./lib/three.min.js'></script>
+<script type='text/javascript' src='./lib/maptalks.three.min.js'></script>
+<script type='text/javascript' src='../dist/maptalks.routeplayer.js'></script>
+<script type='text/javascript' src='./util.js'></script>
+<style>
+    .container {
+        width: 100%;
+        height: 100%;
+    }
+
+    .content {
+        display: none;
+        width: 400px;
+        height: 400px;
+        position: fixed;
+        z-index: 10;
+        top: 0px;
+        right: 0px;
+        overflow: scroll;
+        background-color: white;
+        overflow-x: hidden;
+    }
+
+    .detail {
+        padding-left: 15px;
+    }
+
+    .detail>dl {
+        color: '#56565';
+        font-family: "Microsoft Yahei", "Helvetica Neue", Helvetica, Arial, sans-serif;
+        font-size: 12px;
+        line-height: 1.5;
+
+
+    }
+
+    .detail>dl>dt {
+        position: relative;
+        margin-left: 5px;
+        line-height: 25px;
+        border-bottom: 1px solid #f0f0f0;
+        cursor: pointer;
+    }
+
+    .detail>dl>dt:hover {
+        background-color: whitesmoke;
+    }
+
+    .roadStr {
+        color: '#56565';
+        font-family: "Microsoft Yahei", "Helvetica Neue", Helvetica, Arial, sans-serif;
+        font-size: 12px;
+    }
+
+    .overview {
+        background-color: whitesmoke;
+        padding: 15px;
+    }
+
+    .icon {
+        height: 30px;
+        width: 30px;
+    }
+
+
+    .content::-webkit-scrollbar {
+        width: 5px;
+    }
+
+    .content::-webkit-scrollbar-thumb {
+        background-color: gray;
+        -webkit-border-radius: 2em;
+        -moz-border-radius: 2em;
+        border-radius: 2em;
+    }
+
+    .content::-webkit-scrollbar-track {
+        background-color: white;
+        -webkit-border-radius: 2em;
+        -moz-border-radius: 2em;
+        border-radius: 2em;
+    }
+</style>
+
+<body>
+    <div class="tools">
+        <div class="item"> <button onclick="start()">play</button></div>
+        <div class="item"> <button onclick="pause()">pause</button></div>
+        <!-- <div class="item"> <button onclick="replay()">重播</button></div> -->
+        <div class="item"> <button onclick="setIndex()">setIndex</button></div>
+        <div class="item"> <button onclick="setTime()">setTime</button></div>
+        <div class="item"> <button onclick="setPercent()">setPercent</button></div>
+        <div class="item"> <button onclick="finish()">finish</button></div>
+        <div class="item"> <button onclick="reset()">reset</button></div>
+        <div class="item">
+            <label for="speed">speed</label>
+            <input type="range" id="speed" name="volume" min="1" max="100" value="4" />
+        </div>
+        <div class="item">
+            <label for="speed">auto set map center</label>
+            <input id="automapcenter" type="checkbox" />
+        </div>
+    </div>
+    <div class="content" id="content">
+
+
+        <div class="detail">
+            <dl id="roadinfo">
+                <!-- <dt><img src="assets/icons/start.png" class="icon" /> </dt> -->
+                <!-- {pathStr} -->
+                <!-- <dt><img src="assets/icons/end.png"  class="icon"/> </dt> -->
+            </dl>
+        </div>
+    </div>
+    <div id="map" class="container"></div>
+
+    <script>
+        const modelOffsetAngle = 90;
+        let autoUpdateMapCenter = false;
+
+        const contentDom = document.querySelector('#content');
+        const roadinfoDom = document.querySelector('#roadinfo');
+
+        const map = new maptalks.Map("map", {
+            "center": [116.37986454, 39.86526108], "zoom": 18.640097560172663, "pitch": 67.20000000000061, "bearing": 10.050000000000978,
+            baseLayer: new maptalks.TileLayer('base', {
+                urlTemplate: "https://webrd01.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}",
+                subdomains: ['a', 'b', 'c', 'd'],
+                attribution: '&copy; <a href="https://www.esri.com/en-us/home">esri</a>',
+                maxAvailableZoom: 18,
+            })
+        });
+
+
+        const gltfLayer = new maptalks.GLTFLayer("gltf");
+        const lineLayer = new maptalks.LineStringLayer('line');
+        // 添加到GroupGLLayer中
+        // GroupGLLayer能实现抗锯齿等后处理，也能加入其他三维图层，让子图层都融合到同一个三维空间中
+        const sceneConfig = {
+            postProcess: {
+                enable: true,
+                antialias: { enable: false }
+            }
+        };
+        const groupLayer = new maptalks.GroupGLLayer('group', [lineLayer, gltfLayer], { sceneConfig });
+        groupLayer.addTo(map);
+
+        const debugLayer = createDebugLayer(map);
+
+        const symbol = {
+            url: "./data/1.gltf",
+            modelHeight: 20,
+            // rotationZ: -45
+        };
+        const debugStyle = {
+            // markerType: 'ellipse',
+            // markerWidth: 5,
+            // markerHeight: 5,
+            textSize: 14,
+            textFill: 'blue'
+        }
+
+        function formatPolyline(polyline) {
+            return polyline.split(';').map(c => {
+                return c.split(',').map(v => {
+                    return parseFloat(v);
+                })
+            })
+        }
+
+        function mergeLines(steps) {
+            const route = [];
+            steps.forEach((step, sIndex) => {
+                const { instruction, polyline } = step;
+                let coordinates = formatPolyline(polyline);
+                if (sIndex !== steps.length - 1) {
+                    coordinates = coordinates.slice(0, coordinates.length - 1);
+                }
+                coordinates.forEach((c, index) => {
+                    if (index === 0) {
+                        route.push({
+                            coordinate: c,
+                            ...step
+                        })
+                    } else {
+                        route.push({
+                            coordinate: c,
+                        })
+                    }
+                });
+            });
+            return route;
+        }
+
+        let currentModel, player;
+        function addLine() {
+            fetch('./data/drive.json').then(res => res.json()).then(json => {
+                const route = mergeLines(json.steps);
+                const data = maptalks.formatRouteData(route, { duration: 1000 * 60 * 100 });
+                console.log(data);
+                player = new maptalks.RoutePlayer(data, { speed: 4, debug: true });
+                console.log(player);
+
+                const line = new maptalks.LineString(data.map(d => {
+                    return d.coordinate
+                }), {
+                    symbol: {
+                        lineWidth: 5,
+                        lineColor: 'red'
+                    }
+                });
+                lineLayer.addGeometry(line);
+                const info = player.getStartInfo();
+                currentModel = new maptalks.GLTFMarker(info.coordinate, {
+                    symbol,
+                });
+                gltfLayer.addGeometry(currentModel);
+                updateModelPostion(info)
+                listenEvents();
+            })
+
+        }
+        addLine();
+
+        function updateModelPostion(e) {
+            const { coordinate, rotationZ, rotationX } = e;
+            if (!currentModel) {
+                return;
+            }
+            currentModel.setCoordinates(coordinate);
+            currentModel.setRotation(rotationX, 0, rotationZ + modelOffsetAngle);
+        }
+
+        let vertexs = [];
+        let roadData = [];
+        function listenEvents() {
+            player.on('playstart playing playend vertex pause', e => {
+                console.log(e.type);
+            })
+
+            player.on('playing', e => {
+                if (autoUpdateMapCenter) {
+                    map.setCenter(e.coordinate);
+                }
+                updateModelPostion(e);
+            });
+            player.on('vertex', e => {
+                showVertex(e, vertexs, debugLayer, debugStyle);
+                showRoadLineInfo(e, roadData)
+            });
+        }
+
+        function showRoadLineInfo(e, roadData) {
+            const data = e.data;
+            const index = e.index;
+            if (!roadData[index]) {
+                roadData[index] = data;
+            }
+            const infos = roadData.slice(0, index + 1).filter(d => {
+                return !!d.instruction;
+            }).map((d, index) => {
+                const { instruction, road } = d;
+                return `<dt >${index}.${instruction}-(${road || ''})</dt>`;
+            });
+            if (infos.length === 0) {
+                contentDom.style.display = 'none';
+                return;
+            }
+            contentDom.style.display = 'block';
+            roadinfoDom.innerHTML = infos.reverse().join('').toString();
+        }
+
+
+        function start() {
+            player.play();
+        }
+        function pause() {
+            player.pause();
+        }
+
+        function finish() {
+            player.finish();
+        }
+
+        function reset() {
+            player.reset();
+            debugLayer.removeGeometry(vertexs);
+            roadinfoDom.innerHTML = '';
+            contentDom.style.display = 'none';
+            if (autoUpdateMapCenter) {
+                map.setCenter(player.getStartCoordinate());
+            }
+            updateModelPostion(player.getStartInfo());
+        }
+
+        function replay() {
+            reset();
+            player.replay();
+        }
+
+        function setIndex() {
+            const index = 20;
+            player.setIndex(index);
+        }
+
+        function setTime() {
+            const t = player.getStartTime() / 2 + player.getEndTime() / 2;
+            player.setTime(t);
+        }
+
+        function setPercent() {
+            player.setPercent(0.4);
+        }
+
+        document.querySelector('#speed').addEventListener('change', e => {
+            player.setSpeed(parseFloat(e.target.value));
+        })
+        document.querySelector('#automapcenter').addEventListener('change', e => {
+            autoUpdateMapCenter = (e.target.checked);
+        })
+
+    </script>
+</body>
+
+</html>
