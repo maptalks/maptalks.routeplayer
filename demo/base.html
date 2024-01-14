@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+<meta charset='UTF-8' />
+<meta name='viewport' content='width=device-width, initial-scale=1' />
+<title>地图 - 显示</title>
+<link rel='stylesheet' href='https://maptalks.com/api/maptalks.css' />
+<link rel="stylesheet" href="./style.css" />
+<script type='text/javascript' src='https://maptalks.com/api/maptalks.min.js'></script>
+<script type='text/javascript' src='https://maptalks.com/api/maptalks-gl-layers.js'></script>
+<script type='text/javascript' src='../dist/maptalks.routeplayer.js'></script>
+<script type='text/javascript' src='./util.js'></script>
+<script type='text/javascript' src='./data/data.js'></script>
+
+<body>
+    <div class="tools">
+        <div class="item"> <button onclick="start()">play</button></div>
+        <div class="item"> <button onclick="pause()">pause</button></div>
+        <!-- <div class="item"> <button onclick="replay()">重播</button></div> -->
+        <div class="item"> <button onclick="setIndex()">setIndex</button></div>
+        <div class="item"> <button onclick="setTime()">setTime</button></div>
+        <div class="item"> <button onclick="setPercent()">setPercent</button></div>
+        <div class="item"> <button onclick="finish()">finish</button></div>
+        <div class="item"> <button onclick="reset()">reset</button></div>
+        <div class="item">
+            <label for="speed">speed</label>
+            <input type="range" id="speed" name="volume" min="1" max="100" value="4" />
+        </div>
+        <div class="item">
+            <label for="speed">auto set map center</label>
+            <input id="automapcenter" type="checkbox" />
+        </div>
+    </div>
+    <div id="map" class="container"></div>
+
+    <script>
+
+        const map = new maptalks.Map("map", {
+            "center": [120.61158328, 31.36078557], "zoom": 13.867916986432306, "pitch": 74.6, "bearing": 1.5,
+            baseLayer: new maptalks.TileLayer('base', {
+                urlTemplate:
+                    'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+                subdomains: ['a', 'b', 'c', 'd'],
+                attribution: '&copy; <a href="https://www.esri.com/en-us/home">esri</a>'
+            })
+        });
+
+        const debugLayer = createDebugLayer(map);
+        let autoUpdateMapCenter = false;
+
+        const data = maptalks.formatRouteData(coordinates, { duration: 1000 * 60 * 10 });
+        console.log(data);
+        const player = new maptalks.RoutePlayer(data, { speed: 4, debug: true });
+        console.log(player);
+
+        player.on('playstart playing playend vertex pause time', e => {
+            console.log(e.type);
+        })
+
+        player.on('playing', e => {
+            if (autoUpdateMapCenter) {
+                map.setCenter(e.coordinate);
+            }
+            point.setCoordinates(e.coordinate);
+        });
+        let vertexs = [];
+        player.on('vertex', e => {
+            showVertex(e, vertexs, debugLayer);
+        });
+
+        const line = new maptalks.LineString(data.map(d => {
+            return d.coordinate
+        }), {
+            symbol: {
+                lineColor: 'red'
+            }
+        }).addTo(debugLayer);
+
+        const point = new maptalks.Marker(player.getStartCoordinate(), {
+            zIndex: 1
+        }).addTo(debugLayer);
+
+        function start() {
+            player.play();
+        }
+        function pause() {
+            player.pause();
+        }
+
+        function finish() {
+            player.finish();
+        }
+
+        function reset() {
+            player.reset();
+            debugLayer.removeGeometry(vertexs);
+            point.setCoordinates(player.getStartCoordinate());
+            if (autoUpdateMapCenter) {
+                map.setCenter(player.getStartCoordinate());
+            }
+        }
+
+        function replay() {
+            reset();
+            player.replay();
+        }
+
+        function setIndex() {
+            const index = 20;
+            player.setIndex(index);
+        }
+
+        function setTime() {
+            const t = player.getStartTime() / 2 + player.getEndTime() / 2;
+            player.setTime(t);
+        }
+
+        function setPercent() {
+            player.setPercent(0.4);
+        }
+
+        document.querySelector('#speed').addEventListener('change', e => {
+            player.setSpeed(parseFloat(e.target.value));
+        })
+        document.querySelector('#automapcenter').addEventListener('change', e => {
+            autoUpdateMapCenter = (e.target.checked);
+        })
+
+    </script>
+</body>
+
+</html>

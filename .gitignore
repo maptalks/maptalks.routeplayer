@@ -50,3 +50,4 @@ node_modules
 examples/replace.json
 *.config
 dist
+.npmrc
