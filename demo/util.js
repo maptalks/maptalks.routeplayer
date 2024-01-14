@@ -91,21 +91,23 @@ function createDebugLayer(map) {
     return layer;
 }
 
-function showVertex(e, vertexs, layer) {
+function showVertex(e, vertexs, layer, style) {
     const data = e.data;
     const index = e.index;
     console.log(index);
     if (!vertexs[index]) {
         const coordinate = data.coordinate;
+        style = style || {
+            markerType: 'ellipse',
+            markerWidth: 5,
+            markerHeight: 5,
+            textSize: 12,
+            textName: index,
+            textFill: '#fff'
+        }
+        style.textName = index;
         const point = new maptalks.Marker(coordinate, {
-            symbol: {
-                markerType: 'ellipse',
-                markerWidth: 5,
-                markerHeight: 5,
-                textSize: 12,
-                textName: index,
-                textFill: '#fff'
-            }
+            symbol: style
         });
         vertexs[index] = point;
     }
