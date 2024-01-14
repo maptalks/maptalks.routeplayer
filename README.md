@@ -1,226 +1,370 @@
 # maptalks.routeplayer
 
 [![NPM Version](https://img.shields.io/npm/v/maptalks.routeplayer.svg)](https://github.com/maptalks/maptalks.routeplayer)
+Route Player plugin for maptalks.js.
 
-Route Player plugin for maptalks.js based on [VectorLayer](http://maptalks.org/maptalks.js/api/0.x/VectorLayer.html) and also in 3D scene in GroupGLLayer.
+*  support 2d/3d Layer.
+* high-performance
+* customizable
 
 ![screenshot](https://user-images.githubusercontent.com/13678919/45591786-16929580-b98e-11e8-95fe-83ee73a15d1b.png)
 
 ## Examples
 
-* [Route play](https://maptalks.github.io/maptalks.routeplayer/demo/).
+* [Base use](https://maptalks.github.io/maptalks.routeplayer/demo/base.html).
+* [combine with GLTLLayer](https://maptalks.github.io/maptalks.routeplayer/demo/gltflayer.html).
+* [combine with ThreeLayer](https://maptalks.github.io/maptalks.routeplayer/demo/threelayer.html).
+* [simple road](https://maptalks.github.io/maptalks.routeplayer/demo/bus.html).
+* [test perf by VectorLayer](https://maptalks.github.io/maptalks.routeplayer/demo/perf-base.html).
+* [test perf by GLTLLayer](https://maptalks.github.io/maptalks.routeplayer/demo/perf-3d.html).
 
 ## Install
+
   
-* Install with npm: ```npm install maptalks.routeplayer```. 
-* Use unpkg CDN: ```https://unpkg.com/maptalks.routeplayer/dist/maptalks.routeplayer.js```
+* Install with npm: 
+
+```sh
+npm install maptalks 
+npm install maptalks.routeplayer
+```
+
+* Use unpkg CDN:
+
+```html
+<script type="text/javascript" src="https://unpkg.com/maptalks/dist/maptalks.min.js"></script>
+<script type="text/javascript" src="https://unpkg.com/maptalks.routeplayer/dist/maptalks.routeplayer.js"></script>
+```
 
 ## Usage
 
-As a plugin, ```maptalks.routeplayer``` must be loaded after ```maptalks.js``` in browsers.
+As a plugin, maptalks.routeplayer must be loaded after maptalks.js in browsers.
 
 ### HTML
+
 ```html
 <script type="text/javascript" src="https://unpkg.com/maptalks/dist/maptalks.min.js"></script>
 <script type="text/javascript" src="https://unpkg.com/maptalks.routeplayer/dist/maptalks.routeplayer.js"></script>
 <script>
-const route = [
-    {
-        "path" : [
-            //[x, y, time]
-            [121.475031060928, 31.2611187865471, 301000],
-            [121.47940842604, 31.263466566376, 541000]
-        ],
-        //marker's symbol
-        "markerSymbol" : null,
-        //route line's symbol
-        "lineSymbol" : { lineColor : '#f00' }
-    }
-];
-const player = new maptalks.RoutePlayer(route, map);
-player.play();
+    const route = [{
+            coordinate: [120, 31, 0],
+            time: 301000
+        },
+        {
+            coordinate: [122, 32, 0],
+            time: 541000
+        },
+        //other coordinates
+    ];
+    const data = maptalks.formatRouteData(route, {});
+    const player = new maptalks.RoutePlayer(data, {
+        speed: 4,
+        debug: false
+    });
+    console.log(player);
+    player.play();
 </script>
 ```
 
 ### ESM
 
 ```js
-import { RoutePlayer, Route3DPlayer } from 'maptalks.routeplayer';
-
-const player = new RoutePlayer(route, map);
-const player3d = new Route3DPlayer(route, groupGLLayer);
+import {
+    RoutePlayer,
+    formatRouteData
+} from 'maptalks.routeplayer';
+const route = [{
+        coordinate: [120, 31, 0],
+        time: 301000
+    },
+    {
+        coordinate: [122, 32, 0],
+        time: 541000
+    },
+    //other coordinates
+];
+const data = formatRouteData(route, {});
+const player = new RoutePlayer(data, {
+    speed: 4,
+    debug: false
+});
+console.log(player);
+player.play();
 ```
 
 ## API Reference
+
+### `formatRouteData(route,options)`
+
+format route data util for `RoutePlayer`
+
+```js
+const route = [{
+        coordinate: [120, 31, 0],
+        time: 301000
+    },
+    {
+        coordinate: [122, 32, 0],
+        time: 541000
+    },
+    //other coordinates
+];
+const data = formatRouteData(route, {});
+```
+
+* support custome coordinateKey and timeKey
+
+```js
+const route = [{
+        coord: [120, 31, 0],
+        t: 301000
+    },
+    {
+        coord: [122, 32, 0],
+        t: 541000
+    },
+    //other coordinates
+];
+const data = formatRouteData(route, {
+    coordinateKey: 'coord',
+    timeKey: 't'
+});
+```
+
+* support Automatically generate timestamps
+if you data not time data, you can:
+
+```js
+const route = [{
+        coordinate: [120, 31, 0],
+    },
+    {
+        coordinate: [122, 32, 0]
+    },
+    //other coordinates
+];
+const data = formatRouteData(route, {
+    duration: 1000 * 60 * 10
+});
+```
+
+The automatically generated time is milliseconds, by `new Date().getTime()`
 
 ### `RoutePlayer`
 
-```javascript
-new RoutePlayer(route, map, options)
-```
-
-* route **Object[]** an object array containing routes data
-* map **Map** maptalks map instance
-* options **Object** options
-    * unitTime **Number** unit time for 1ms in player, default is 1000ms
-    * showRoutes **Boolean** Whether to show routes during playing
-
-### `Route3DPlayer`
+#### constructor
 
 ```javascript
-new Route3DPlayer(route, groupGLLayer, options)
+new RoutePlayer(routeData, options)
 ```
 
-For route play in 3D scene.
-
-* route **Object[]** an object array containing routes data
-* groupGLLayer **GroupGLLayer** groupGLLayer, imported from `@maptalks/gl-layers`
+* routeData **Array<Object>** an object array containing routes data, from `formatRouteData` result
 * options **Object** options
-    * unitTime **Number** unit time for 1ms in player, default is 1000ms
-    * showRoutes **Boolean** Whether to show routes during playing
+    - unitTime **Number** unit time for 1ms in player, default is 1 
+    - speed **Number** the speed of play
+    - debug **Boolean** 
+    - autoPlay **Boolean** Whether auto play
+    - repeat **Boolean** Whether repeat play
 
-### `remove()`
+```js
+import {
+    RoutePlayer,
+    formatRouteData
+} from 'maptalks.routeplayer';
+const route = [{
+        coordinate: [120, 31, 0],
+        time: 301000
+    },
+    {
+        coordinate: [122, 32, 0],
+        time: 541000
+    },
+    //other coordinates
+];
+const data = formatRouteData(route, {});
+const player = new RoutePlayer(data, {
+    speed: 4,
+    debug: false,
+    autoPlay: true
+});
+console.log(player);
+player.play();
+```
 
-stop playing and remove from map.
+#### methods
 
-**Returns** `this`
+* `remove()`
+* `add()`
+* `play()`
+* `pause()`
+* `reset()` Restore all states to their original state
 
-### `play()`
+```js
+function replay() {
+    player.reset();
+    player.play();
+}
+```
 
-Start to play.
+* `cancel()` Equivalent to `reset`
+* `isPlaying()`
+* `isPlayend()`
+* `finish()`
+* `getSpeed()`
+* `setSpeed(speed)` It can be analogized to the speed of a video
 
-**Returns** `this`
+```js
+player.setSpeed(10);
+```
 
-### `pause()`
+* `setIndex(index)` Set the current playback position to a coordinate node
 
-Pause playing.
+```js
+player.setIndex(10);
+```
 
-**Returns** `this`
+* `setTime(time)` Set the current playback position to a certain time
 
-### `cancel()`
+```js
+     const t = player.getStartTime() / 2 + player.getEndTime() / 2;
+     player.setTime(t);
+```
 
-Cancel playing.
+* `setPercent(percent)` Set the current playback position as a percentage of distance
 
-**Returns** `this`
+```js
+player.setPercent(0.3);
+```
 
-### `finish()`
+* `setData(data)` reset route data
 
-Finish playing.
+```js
+const newData = formatRouteData(route, {});
+player.setData(data);
+```
 
-**Returns** `this`
+* `getCurrentTime()`
+* `getStartCoordinate()` Get the coordinates of the first node
+* `getStartInfo()` Obtain information about the starting point, including coordinates, rotation information, etc
 
-### `getStartTime()`
+```js
+   const info = player.getStartInfo();
+   console.log(info.coordinate);
+   //for 3d model rotation
+   console.log(info.rotationZ);
+   console.log(info.rotationX);
 
-Get player's playing start time.
-Player's start time is the minimum one of all the route's start time;
+   function updateModelPostion(e) {
+       const {
+           coordinate,
+           rotationZ,
+           rotationX
+       } = e;
+       if (!currentModel) {
+           return;
+       }
+       // if (Math.abs(rotationX) > 40) {
+       //     console.log(rotationX);
+       // }
+       currentModel.setCoordinates(coordinate);
+       currentModel.setRotation(rotationX, 0, rotationZ + modelOffsetAngle);
+   }
+   currentModel = new maptalks.GLTFMarker(info.coordinate, {
+       symbol,
+   });
+   gltfLayer.addGeometry(currentModel);
+   updateModelPostion(info)
+```
 
-**Returns** `Number`
+* `getData()`
+* `getStartTime()`
+* `getEndTime()`
+* `getUnitTime()`
+* `setUnitTime(t)`
+* `getCurrentCoordinate()` Get the coordinates of the current playback point
 
-### `getEndTime()`
+#### events
 
-Get player's playing end time.
-Player's end time is the maximum one of all the route's start time;
+```js
+      player.on('playstart playing playend pause', e => {
+          console.log(e.type);
+      })
+```
 
-**Returns** `Number`
+* `add`
+* `remove`
+* `playstart`
+* `playing`
 
-### `getCurrentTime()`
+```js
+function updateModelPostion(e) {
+    const {
+        coordinate,
+        rotationZ,
+        rotationX
+    } = e;
+    if (!currentModel) {
+        return;
+    }
+    // if (Math.abs(rotationX) > 40) {
+    //     console.log(rotationX);
+    // }
+    currentModel.setCoordinates(coordinate);
+    currentModel.setRotation(rotationX, 0, rotationZ + modelOffsetAngle);
+}
+player.on('playing', e => {
+    if (autoUpdateMapCenter) {
+        map.setCenter(e.coordinate);
+    }
+    updateModelPostion(e);
+    // point.setCoordinates(e.coordinate);
+});
+```
 
-Get player's current time of playing.
+* `playend`
+* `vertex` Passing through coordinate nodes during playback
 
-**Returns** `Number`
+```js
+function showVertex(e, vertexs, layer) {
+    const data = e.data;
+    const index = e.index;
+    console.log(index);
+    if (!vertexs[index]) {
+        const coordinate = data.coordinate;
+        const point = new maptalks.Marker(coordinate, {
+            symbol: {
+                markerType: 'ellipse',
+                markerWidth: 5,
+                markerHeight: 5,
+                textSize: 12,
+                textName: index,
+                textFill: '#fff'
+            }
+        });
+        vertexs[index] = point;
+    }
+    const point = vertexs[index];
+    if (!point.getLayer()) {
+        point.addTo(layer);
+    }
 
-### `setTime(t)`
+    const needRemoves = vertexs.slice(index + 1, Infinity);
+    if (needRemoves.length) {
+        layer.removeGeometry(needRemoves);
+    }
+}
 
-Set player's time to t and redraw all the things at that moment.
+let vertexs = [];
+player.on('vertex', e => {
+    showVertex(e, vertexs, debugLayer);
+});
+```
 
-**Returns** `this`
-
-### `getUnitTime()`
-
-Get player's unit time.
-
-**Returns** `Number`
-
-### `setUnitTime()`
-
-Set player's unit time.
-
-**Returns** `this`
-
-### `getCurrentCoordinates(index)`
-
-Get route of the given index's current coordinate
-
-**Returns** `Coordinate`
-
-### `getMarkerSymbol(idx)`
-
-Get marker symbol of route idx.
-
-**Returns** `Object`
-
-### `setMarkerSymbol(idx, symbol)`
-
-Set route idx's marker symbol.
-
-**Returns** `this`
-
-### `getLineSymbol(idx)`
-
-Get line symbol of route idx.
-
-**Returns** `Object`
-
-### `setLineSymbol(idx, symbol)`
-
-Set route idx's line symbol.
-
-**Returns** `this`
-
-## Supported Browsers
-
-IE 9-11, Chrome, Firefox, other modern and mobile browsers.
-
-## API Reference
+* `settime` it will when you setTime/setIndex/setPercent
+* `reset`
+* `cancel`
+* `pause`
+* `finish`
 
 ## Contributing
 
 We welcome any kind of contributions including issue reportings, pull requests, documentation corrections, feature requests and any other helps.
-
-## Develop
-
-The only source file is ```index.js```.
-
-It is written in ES6, transpiled by [babel](https://babeljs.io/) and tested with [mocha](https://mochajs.org) and [expect.js](https://github.com/Automattic/expect.js).
-
-### Scripts
-
-* Install dependencies
-```shell
-$ npm install
-```
-
-* Watch source changes and generate runnable bundle repeatedly
-```shell
-$ gulp watch
-```
-
-* Tests
-```shell
-$ npm test
-```
-
-* Watch source changes and run tests repeatedly
-```shell
-$ gulp tdd
-```
-
-* Package and generate minified bundles to dist directory
-```shell
-$ gulp minify
-```
-
-* Lint
-```shell
-$ npm run lint
-```
