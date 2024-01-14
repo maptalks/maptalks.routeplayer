@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html>
+<meta charset='UTF-8' />
+<meta name='viewport' content='width=device-width, initial-scale=1' />
+<title>地图 - 显示</title>
+<link rel="stylesheet" href="./style.css" />
+<link rel='stylesheet' href='https://maptalks.com/api/maptalks.css' />
+<script type='text/javascript' src='https://cdn.jsdelivr.net/npm/geolib@3.3.4/lib/index.min.js'></script>
+<script type='text/javascript' src='https://maptalks.com/api/maptalks.min.js'></script>
+<script type='text/javascript' src='https://maptalks.com/api/maptalks-gl-layers.js'></script>
+<script type='text/javascript' src='../dist/maptalks.routeplayer.js'></script>
+<script type='text/javascript' src='./util.js'></script>
+
+<body>
+    <div class="tools">
+        <div class="item"> <button onclick="start()">play</button></div>
+        <div class="item"> <button onclick="pause()">pause</button></div>
+        <div class="item"> <button onclick="finish()">finish</button></div>
+        <div class="item"> <button onclick="reset()">reset</button></div>
+        <div class="item">
+            <label for="speed">speed</label>
+            <input type="range" id="speed" name="volume" min="1" max="100" value="4" />
+        </div>
+    </div>
+    <div id="map" class="container"></div>
+
+    <script>
+        const modelOffsetAngle = 90;
+        let autoUpdateMapCenter = false;
+        const map = new maptalks.Map("map", {
+            "center": [116.45033283, 39.9017363], "zoom": 11.747534393964086, "pitch": 61.50000000000047, "bearing": -1.9499999999998183,
+            baseLayer: new maptalks.TileLayer('base', {
+                urlTemplate:
+                    'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+                subdomains: ['a', 'b', 'c', 'd'],
+                attribution: '&copy; <a href="https://www.esri.com/en-us/home">esri</a>'
+            })
+        });
+
+
+        const lineLayer = new maptalks.VectorLayer("line", {
+            geometryEvents: false,
+            forceRenderOnMoving: true,
+            forceRenderOnZooming: true,
+            forceRenderOnRotating: true,
+            progressiveRender: true,
+            progressiveRenderCount: 100
+        }).addTo(map);
+        const pointLayer = new maptalks.VectorLayer('point', {
+            // collision: true
+        }).addTo(map);
+        // 添加到GroupGLLayer中
+        // GroupGLLayer能实现抗锯齿等后处理，也能加入其他三维图层，让子图层都融合到同一个三维空间中
+        const sceneConfig = {
+            postProcess: {
+                enable: true,
+                antialias: { enable: false }
+            }
+        };
+
+        const debugLayer = createDebugLayer(map);
+
+        /**start**/
+        const symbol = {
+            url: "./data/1.gltf",
+            modelHeight: 30,
+            // rotationZ: -45
+        };
+
+
+
+        const playerList = [];
+        function addLine() {
+            fetch('./data/bus.json').then(res => res.json()).then(geojson => {
+                // console.log(JSON.stringify(geojson))
+                // const features = data.map(d => {
+                //     return d.feature;
+                // })
+                // const geojson = { type: 'FeatureCollection', features };
+                const features = geojson.features;
+                const lines = maptalks.GeoJSON.toGeometry(geojson, (line => {
+                    line.setSymbol({
+                        lineColor: '#fff',
+                        lineWidth: 1
+                    })
+                }));
+                lineLayer.addGeometry(lines);
+                const players = features.map(f => {
+                    const coordinates = f.geometry.coordinates;
+                    const pathLength = geolib.getPathLength(coordinates);
+                    const duration = pathLength * 15;
+                    // console.log(duration);
+                    const data = maptalks.formatRouteData(coordinates, { duration });
+                    return new maptalks.RoutePlayer(data, { speed: 10, debug: true, autoPlay: true });
+                });
+
+                players.forEach(player => {
+                    const info = player.getStartInfo();
+                    const model = new maptalks.Marker(info.coordinate, {
+                        symbol: {
+                            // markerType: 'ellipse',
+                            markerWidth: 30,
+                            markerHeight: 30,
+                            markerFile: './data/poi.png'
+                        }
+                    });
+                    pointLayer.addGeometry(model);
+                    playerList.push({
+                        player,
+                        model
+                    })
+                    updateModelPostion(info, model);
+                })
+                listenEvents();
+            })
+
+
+
+        }
+        addLine();
+
+        function updateModelPostion(e, model) {
+            const { coordinate, rotationZ, rotationX } = e;
+            if (!model) {
+                return;
+            }
+            model.setCoordinates(coordinate);
+            // model.setRotation(rotationX, 0, rotationZ + modelOffsetAngle);
+        }
+
+        function listenEvents() {
+            playerList.forEach(d => {
+                const { player, model } = d;
+                player.on('playstart playing playend vertex pause', e => {
+                    // console.log(e.type);
+                })
+
+                player.on('playing', e => {
+                    updateModelPostion(e, model);
+                    // point.setCoordinates(e.coordinate);
+                });
+                // let vertexs = [];
+                // player.on('vertex', e => {
+                //     showVertex(e, vertexs, debugLayer);
+                // });
+            });
+        }
+
+
+        function start() {
+            playerList.forEach(d => {
+                const { player, model } = d;
+                player.play();
+            });
+        }
+        function pause() {
+            playerList.forEach(d => {
+                const { player, model } = d;
+                player.pause();
+            });
+        }
+
+        function finish() {
+            playerList.forEach(d => {
+                const { player, model } = d;
+                player.finish();
+            });
+        }
+
+        function reset() {
+
+            playerList.forEach(d => {
+                const { player, model } = d;
+                player.reset();
+
+                updateModelPostion(player.getStartInfo(), model);
+            });
+
+
+        }
+
+
+        document.querySelector('#speed').addEventListener('change', e => {
+            playerList.forEach(d => {
+                const { player, model } = d;
+                player.setSpeed(parseFloat(e.target.value));
+            });
+
+        })
+    </script>
+</body>
+
+</html>

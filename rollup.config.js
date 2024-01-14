@@ -1,89 +1,92 @@
-const { nodeResolve: resolve } = require('@rollup/plugin-node-resolve');
-const commonjs = require('@rollup/plugin-commonjs');
-const terser = require('rollup-plugin-terser').terser;
-const pkg = require('./package.json');
+// Rollup plugins
+import { nodeResolve as resolve } from '@rollup/plugin-node-resolve';
+import commonjs from '@rollup/plugin-commonjs';
+import { terser } from 'rollup-plugin-terser';
+import json from '@rollup/plugin-json';
+import typescript from '@rollup/plugin-typescript';
+import pkg from './package.json';
+const path = require('path');
 
 const production = process.env.BUILD === 'production';
-const outputFile = production ? 'dist/maptalks.routeplayer.js' : 'dist/maptalks.routeplayer-dev.js';
-const plugins = production ? [
-    terser({
-        mangle: {
-            properties: {
-                'regex' : /^_/,
-                'keep_quoted' : true,
-                'reserved': ['on', 'once', 'off']
-            }
-        },
-        output : {
-            keep_quoted_props: true,
-            beautify: false,
-            comments : '/^!/'
-        }
-    })] : [];
+
 
 const banner = `/*!\n * ${pkg.name} v${pkg.version}\n * LICENSE : ${pkg.license}\n * (c) 2016-${new Date().getFullYear()} maptalks.org\n */`;
 
 let outro = pkg.name + ' v' + pkg.version;
-if (pkg.peerDependencies && pkg.peerDependencies['maptalks']) {
-    outro += `, requires maptalks@${pkg.peerDependencies.maptalks}.`;
-}
+
 
 outro = `typeof console !== 'undefined' && console.log('${outro}');`;
 
-const basePlugins = [
-    resolve({
-        module : true,
-        jsnext : true,
-        main : true
+const external = ['maptalks'];
+const FILEMANE = pkg.name;
+const sourceMap = !production;
+
+const plugins = [
+    json(),
+    typescript({
+
     }),
+    resolve(),
     commonjs()
+    // babel({
+    //     // exclude: ['node_modules/**']
+    // })
 ];
 
-module.exports = [
+function getEntry() {
+    return path.join(__dirname, './index.ts');
+}
+
+export default [
     {
-        input: 'index.js',
-        external: ['maptalks', '@maptalks/gl-layers'],
-        plugins: basePlugins.concat(plugins),
+        input: getEntry(),
+        external: external,
+        plugins: plugins,
         output: {
-            globals: {
-                'maptalks': 'maptalks',
-                '@maptalks/gl-layers': 'maptalks'
-            },
-            'sourcemap': production ? false : 'inline',
             'format': 'umd',
             'name': 'maptalks',
+            'file': `dist/${FILEMANE}.js`,
+            'sourcemap': sourceMap,
+            'extend': true,
             'banner': banner,
             'outro' : outro,
-            'extend' : true,
-            'file': outputFile
+            'globals': {
+                'maptalks': 'maptalks'
+            }
         }
     },
+    // {
+    //     input: getEntry(),
+    //     external: external,
+    //     plugins: plugins,
+    //     output: {
+    //         'sourcemap': false,
+    //         'format': 'es',
+    //         // banner,
+    //         'file': `dist/${FILEMANE}.mjs`,
+    //         'extend': true,
+    //         'banner': banner,
+    //         'globals': {
+    //             'maptalks': 'maptalks'
+    //         }
+    //     }
+    // },
     {
-        input: 'index.js',
-        plugins: basePlugins.concat(production ? [
-            terser({
-                output : { comments : '/^!/', beautify: true },
-                mangle : {
-                    properties: {
-                        'regex' : /^_/,
-                        'keep_quoted' : true
-                    }
-                }
-            })
-        ] : []),
-        external: ['maptalks', '@maptalks/gl-layers'],
+        input: getEntry(),
+        external: external,
+        plugins: plugins.concat([terser()]),
         output: {
-            globals: {
-                'maptalks': 'maptalks',
-                '@maptalks/gl-layers': 'maptalks'
-            },
-            'sourcemap': false,
-            'format': 'es',
-            'banner': banner,
-            'extend': true,
+            'format': 'umd',
             'name': 'maptalks',
+            'file': `dist/${FILEMANE}.min.js`,
+            'sourcemap': false,
+            'extend': true,
+            'banner': banner,
             'outro' : outro,
-            'file': pkg.module
+            'globals': {
+                'maptalks': 'maptalks'
+            }
         }
     }
+
 ];
