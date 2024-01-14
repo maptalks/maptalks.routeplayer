@@ -446,6 +446,7 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
         if (!this.isAvailable()) {
             return this;
         }
+        this._init();
         // @ts-ignore
         this.fire('cancel');
         return this;
