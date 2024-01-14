@@ -352,7 +352,7 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
     }
 
     _firePlayStart() {
-        const item1 = this.getDataByIndex(0), item2 = this.getDataByIndex(1);
+        const item1 = this.getItem(0), item2 = this.getItem(1);
         if (!item1 || !item2) {
             return null;
         }
@@ -623,7 +623,7 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
         return this;
     }
 
-    getDataByIndex(index: number): DataItem | null {
+    getItem(index: number): DataItem | null {
         if (!isNumber(index) || this.isDirty()) {
             return null;
         }
@@ -636,7 +636,7 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
     }
 
     getStartCoordinate() {
-        const dataItem = this.getDataByIndex(0);
+        const dataItem = this.getItem(0);
         if (dataItem) {
             return dataItem.coordinate;
         }
