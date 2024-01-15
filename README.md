@@ -1,6 +1,7 @@
 # maptalks.routeplayer
 
 [![NPM Version](https://img.shields.io/npm/v/maptalks.routeplayer.svg)](https://github.com/maptalks/maptalks.routeplayer)
+
 Route Player plugin for maptalks.js.
 
 *  support 2d/3d Layer.
@@ -12,8 +13,8 @@ Route Player plugin for maptalks.js.
 ## Examples
 
 * [Base use](https://maptalks.github.io/maptalks.routeplayer/demo/base.html).
-* [combine with GLTLLayer](https://maptalks.github.io/maptalks.routeplayer/demo/gltflayer.html).
-* [combine with ThreeLayer](https://maptalks.github.io/maptalks.routeplayer/demo/threelayer.html).
+* [with GLTLLayer](https://maptalks.github.io/maptalks.routeplayer/demo/gltflayer.html).
+* [with ThreeLayer](https://maptalks.github.io/maptalks.routeplayer/demo/threelayer.html).
 * [simple road](https://maptalks.github.io/maptalks.routeplayer/demo/road.html).
 * [drive road](https://maptalks.github.io/maptalks.routeplayer/demo/drive.html).
 * [test perf by VectorLayer](https://maptalks.github.io/maptalks.routeplayer/demo/perf-base.html).
@@ -132,7 +133,7 @@ const data = formatRouteData(route, {
 ```
 
 * support Automatically generate timestamps
-if you data not time data, you can:
+if your data no time, you can:
 
 ```js
 const route = [{
@@ -150,6 +151,8 @@ const data = formatRouteData(route, {
 
 The automatically generated time is milliseconds, by `new Date().getTime()`
 
+**duration unit is milliseconds**
+
 ### `RoutePlayer`
 
 #### constructor
@@ -158,9 +161,9 @@ The automatically generated time is milliseconds, by `new Date().getTime()`
 new RoutePlayer(routeData, options)
 ```
 
-* routeData **Array<Object>** an object array containing routes data, from `formatRouteData` result
+* routeData **Array<Object>** an object array containing routes data, from `formatRouteData` function run result
 * options **Object** options
-    - unitTime **Number** unit time for 1ms in player, default is 1 
+    - unitTime **Number** unit time, default is 1 ,Internally used milliseconds as a unit, if the time unit of your data is not milliseconds, please set its value,For example, if your data time unit is seconds, we can set it to 1000
     - speed **Number** the speed of play
     - debug **Boolean** 
     - autoPlay **Boolean** Whether auto play
@@ -281,6 +284,12 @@ player.setData(data);
 * `getEndTime()`
 * `getUnitTime()`
 * `setUnitTime(t)`
+
+```js
+//if your data time unit is second,1 second= 1000 ms
+player.setUnitTime(1000);
+```
+
 * `getCurrentCoordinate()` Get the coordinates of the current playback point
 
 #### events
