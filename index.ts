@@ -281,6 +281,7 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
         }
         if (this.isRemoved()) {
             console.warn(`RoutePlayer(${this.id}) has removed`);
+            return false;
         }
         return true;
     }
