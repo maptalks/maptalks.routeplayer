@@ -8,7 +8,7 @@
 <script type='text/javascript' src='https://cdn.jsdelivr.net/npm/geolib@3.3.4/lib/index.min.js'></script>
 <script type='text/javascript' src='https://maptalks.com/api/maptalks.min.js'></script>
 <script type='text/javascript' src='https://maptalks.com/api/maptalks-gl-layers.js'></script>
-<script type='text/javascript' src='../dist/maptalks.routeplayer.js'></script>
+<script src="https://unpkg.com/maptalks.routeplayer/dist/maptalks.routeplayer.js"></script>
 <script type='text/javascript' src='./util.js'></script>
 
 <body>
@@ -102,7 +102,7 @@
                 }).addTo(gltfLayer);
                 playerList.forEach(d => {
                     const { player, index } = d;
-                    updateModelPostion(player.getStartInfo(), index);
+                    updateModelPosition(player.getStartInfo(), index);
                 });
                 listenEvents();
             })
@@ -112,7 +112,7 @@
         }
         addLine();
 
-        function updateModelPostion(e, index) {
+        function updateModelPosition(e, index) {
             const { coordinate, rotationZ, rotationX } = e;
             if (!model) {
                 return;
@@ -130,7 +130,7 @@
                 })
 
                 player.on('playing', e => {
-                    updateModelPostion(e, index);
+                    updateModelPosition(e, index);
                 });
                 // let vertexs = [];
                 // player.on('vertex', e => {
@@ -166,7 +166,7 @@
                 const { player, index } = d;
                 player.reset();
 
-                updateModelPostion(player.getStartInfo(), index);
+                updateModelPosition(player.getStartInfo(), index);
             });
 
 
