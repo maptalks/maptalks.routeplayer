@@ -12,13 +12,13 @@ Route Player plugin for maptalks.js.
 
 ## Examples
 
-* [Base use](https://maptalks.github.io/maptalks.routeplayer/demo/base.html).
+* [Basic demo](https://maptalks.github.io/maptalks.routeplayer/demo/base.html).
 * [with GLTLLayer](https://maptalks.github.io/maptalks.routeplayer/demo/gltflayer.html).
 * [with ThreeLayer](https://maptalks.github.io/maptalks.routeplayer/demo/threelayer.html).
 * [simple road](https://maptalks.github.io/maptalks.routeplayer/demo/road.html).
 * [drive road](https://maptalks.github.io/maptalks.routeplayer/demo/drive.html).
 * [test perf by VectorLayer](https://maptalks.github.io/maptalks.routeplayer/demo/perf-base.html).
-* [test perf by GLTLLayer](https://maptalks.github.io/maptalks.routeplayer/demo/perf-3d.html).
+* [test perf by GLTFLayer](https://maptalks.github.io/maptalks.routeplayer/demo/perf-3d.html).
 
 ## Install
 
