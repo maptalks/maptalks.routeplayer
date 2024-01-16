@@ -90,12 +90,12 @@
                 symbol,
             });
             gltfLayer.addGeometry(currentModel);
-            updateModelPostion(info)
+            updateModelPosition(info)
 
         }
         addLine();
 
-        function updateModelPostion(e) {
+        function updateModelPosition(e) {
             const { coordinate, rotationZ, rotationX } = e;
             if (!currentModel) {
                 return;
@@ -115,7 +115,7 @@
             if (autoUpdateMapCenter) {
                 map.setCenter(e.coordinate);
             }
-            updateModelPostion(e);
+            updateModelPosition(e);
             // point.setCoordinates(e.coordinate);
         });
         let vertexs = [];
@@ -140,7 +140,7 @@
             if (autoUpdateMapCenter) {
                 map.setCenter(player.getStartCoordinate());
             }
-            updateModelPostion(player.getStartInfo());
+            updateModelPosition(player.getStartInfo());
         }
 
         function replay() {

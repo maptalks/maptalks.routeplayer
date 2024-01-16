@@ -97,7 +97,7 @@
                         player,
                         model
                     })
-                    updateModelPostion(info, model);
+                    updateModelPosition(info, model);
                 })
                 listenEvents();
             })
@@ -107,7 +107,7 @@
         }
         addLine();
 
-        function updateModelPostion(e, model) {
+        function updateModelPosition(e, model) {
             const { coordinate, rotationZ, rotationX } = e;
             if (!model) {
                 return;
@@ -124,7 +124,7 @@
                 })
 
                 player.on('playing', e => {
-                    updateModelPostion(e, model);
+                    updateModelPosition(e, model);
                     // point.setCoordinates(e.coordinate);
                 });
                 // let vertexs = [];
@@ -161,7 +161,7 @@
                 const { player, model } = d;
                 player.reset();
 
-                updateModelPostion(player.getStartInfo(), model);
+                updateModelPosition(player.getStartInfo(), model);
             });
 
 

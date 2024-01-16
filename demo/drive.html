@@ -224,14 +224,14 @@
                     symbol,
                 });
                 gltfLayer.addGeometry(currentModel);
-                updateModelPostion(info)
+                updateModelPosition(info)
                 listenEvents();
             })
 
         }
         addLine();
 
-        function updateModelPostion(e) {
+        function updateModelPosition(e) {
             const { coordinate, rotationZ, rotationX } = e;
             if (!currentModel) {
                 return;
@@ -251,7 +251,7 @@
                 if (autoUpdateMapCenter) {
                     map.setCenter(e.coordinate);
                 }
-                updateModelPostion(e);
+                updateModelPosition(e);
             });
             player.on('vertex', e => {
                 showVertex(e, vertexs, debugLayer, debugStyle);
@@ -299,7 +299,7 @@
             if (autoUpdateMapCenter) {
                 map.setCenter(player.getStartCoordinate());
             }
-            updateModelPostion(player.getStartInfo());
+            updateModelPosition(player.getStartInfo());
         }
 
         function replay() {

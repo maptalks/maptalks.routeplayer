@@ -257,7 +257,7 @@ player.setData(data);
    console.log(info.rotationZ);
    console.log(info.rotationX);
 
-   function updateModelPostion(e) {
+   function updateModelPosition(e) {
        const {
            coordinate,
            rotationZ,
@@ -276,7 +276,7 @@ player.setData(data);
        symbol,
    });
    gltfLayer.addGeometry(currentModel);
-   updateModelPostion(info)
+   updateModelPosition(info)
 ```
 
 * `getData()`
@@ -306,7 +306,7 @@ player.setUnitTime(1000);
 * `playing`
 
 ```js
-function updateModelPostion(e) {
+function updateModelPosition(e) {
     const {
         coordinate,
         rotationZ,
@@ -325,7 +325,7 @@ player.on('playing', e => {
     if (autoUpdateMapCenter) {
         map.setCenter(e.coordinate);
     }
-    updateModelPostion(e);
+    updateModelPosition(e);
     // point.setCoordinates(e.coordinate);
 });
 ```
