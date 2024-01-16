@@ -161,8 +161,8 @@ The automatically generated time is milliseconds, by `new Date().getTime()`
 new RoutePlayer(routeData, options)
 ```
 
-* routeData **Array<Object>** an object array containing routes data, from `formatRouteData` function run result
-* options **Object** options
+* routeData **Array** an object array containing routes data, from `formatRouteData` function run result 
+* options **Object**
     - unitTime **Number** unit time, default is 1 ,Internally used milliseconds as a unit, if the time unit of your data is not milliseconds, please set its value,For example, if your data time unit is seconds, we can set it to 1000
     - speed **Number** the speed of play
     - debug **Boolean** 
