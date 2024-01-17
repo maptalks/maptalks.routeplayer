@@ -698,7 +698,7 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
         return this.coordinate;
     }
 
-    getCoordiantes(): Array<Coordinate> {
+    getCoordinates(): Array<Coordinate> {
         if (this.isDirty()) {
             return [];
         }
