@@ -229,6 +229,7 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
     private data: Array<DataItem>;
     private removed: boolean = false;
     private id: number;
+    private index: number;
 
     constructor(data: Array<DataItem>, options?: RoutePlayerOptions) {
         super(options);
@@ -255,6 +256,7 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
         this.time = this.startTime;
         this.playing = false;
         this.playend = false;
+        this.index = -1;
         this.tempRotaionX = 0;
         this.tempRotationZ = 0;
         this.coordinate = this.data[0].coordinate;
@@ -341,10 +343,11 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
             item._passed = true;
             this._setCurrentCoordinate(item.coordinate);
             const result = this._firePlayStart();
-            // @ts-ignore
-            this.fire(EVENT_PLAYING, result);
+            this.index = 0;
             // @ts-ignore
             this.fire(EVENT_VERTEX, { data: item, index: 0, coordinate: result.coordinate });
+            // @ts-ignore
+            this.fire(EVENT_PLAYING, result);
         }
         const time = t * this.getSpeed() * this.getUnitTime();
         this.time += time;
@@ -395,10 +398,11 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
                 }
                 const rotationZ = getRotationZ(c1, c2, this);
                 const rotationX = getRotationX(c1, c2, this);
-                // @ts-ignore
-                this.fire(EVENT_PLAYING, { coordinate: item.coordinate, rotationZ, rotationX });
+                this.index = i;
                 // @ts-ignore
                 this.fire(EVENT_VERTEX, { data: item, index: i, coordinate: item.coordinate });
+                // @ts-ignore
+                this.fire(EVENT_PLAYING, { coordinate: item.coordinate, rotationZ, rotationX });
             }
             if (this.time < _time) {
                 const percent = (this.time - tempTime) / (_time - tempTime);
@@ -548,16 +552,20 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
                 }
             }
         }
+        if (index === -1) {
+            index = this.data.length - 1;
+        }
         if (index !== -1) {
             const item1 = this.data[index - 1], item2 = this.data[index];
             const t1 = item1._time, t2 = item2._time;
             const c1 = item1.coordinate, c2 = item2.coordinate;
             const percent = (this.time - (t1 as number)) / ((t2 as number) - (t1 as number));
             const currentCoordinate = getCoordinateByPercent(c1, c2, percent);
-            // @ts-ignore
-            this.fire(EVENT_TIME, { time: this.time, coordinate: currentCoordinate });
+            this.index = index - 1;
             // @ts-ignore
             this.fire(EVENT_VERTEX, { data: item1, index: index - 1 });
+            // @ts-ignore
+            this.fire(EVENT_TIME, { time: this.time, coordinate: currentCoordinate });
         }
         this.playend = false;
         this._play();
@@ -688,6 +696,22 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
 
     getCurrentCoordinate(): Coordinate {
         return this.coordinate;
+    }
+
+    getCoordiantes(): Array<Coordinate> {
+        if (this.isDirty()) {
+            return [];
+        }
+        return this.data.map(d => {
+            return d.coordinate;
+        });
+    }
+
+    getCurrentVertex(): Array<DataItem> {
+        if (this.index < 0) {
+            return [];
+        }
+        return this.data.slice(0, this.index + 1);
     }
 
 }
