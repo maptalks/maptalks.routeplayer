@@ -291,6 +291,7 @@ player.setUnitTime(1000);
 ```
 
 * `getCurrentCoordinate()` Get the coordinates of the current playback point
+* `getCurrentVertex()`
 
 #### events
 
@@ -378,3 +379,12 @@ player.on('vertex', e => {
 ## Contributing
 
 We welcome any kind of contributions including issue reportings, pull requests, documentation corrections, feature requests and any other helps.
+
+## Changelog
+
+* 1.0.0-alpha.1
+  - refactor [details](https://github.com/maptalks/maptalks.routeplayer/pull/46)
+
+* 1.0.0-alpha.2
+
+  - add `getCurrentVertex()` method
