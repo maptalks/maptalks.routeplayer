@@ -9,7 +9,7 @@
 <script type='text/javascript' src='https://cdn.jsdelivr.net/npm/maptalks/dist/maptalks.min.js'></script>
 <script type='text/javascript'
     src='https://cdn.jsdelivr.net/npm/@maptalks/gl-layers/dist/maptalks-gl-layers.js'></script>
-<script src="https://cdn.jsdelivr.net/npm/maptalks.routeplayer/dist/maptalks.routeplayer.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/maptalks.routeplayer@latest/dist/maptalks.routeplayer.js"></script>
 <script type='text/javascript' src='./util.js'></script>
 
 <body>
@@ -76,7 +76,7 @@
                 // console.log(JSON.stringify(data));
                 let coordinateCount = 0;
                 let page = 1;
-                const pageSize = 10;
+                const pageSize = 30;
                 const count = Math.ceil(data.length / pageSize);
                 const run = () => {
                     const start = (page - 1) * pageSize, end = page * pageSize;
