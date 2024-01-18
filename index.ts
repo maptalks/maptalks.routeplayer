@@ -1,5 +1,5 @@
 import * as maptalks from 'maptalks';
-import getDistance from 'geolib/es/getDistance';
+// import getDistance from 'geolib/es/getDistance';
 import getRhumbLineBearing from 'geolib/es/getRhumbLineBearing';
 const isArray = Array.isArray;
 const { isNumber, extend, now, isObject, GUID } = maptalks.Util;
@@ -26,6 +26,28 @@ type FormatDataOptions = {
     timeKey?: string
 }
 
+
+const pi = Math.PI / 180;
+const R = 6378137;
+
+function toRadian(d: number) {
+    return d * pi;
+}
+
+//from maptalks.js https://github.com/maptalks/maptalks.js/blob/7ad5d423bb3ffb6afad582da7d18f6e9e5bee041/src/geo/measurer/Sphere.js#L18
+function measureLenBetween(c1: Coordinate, c2: Coordinate) {
+    if (!c1 || !c2) {
+        return 0;
+    }
+    let b = toRadian(c1[1]);
+    const d = toRadian(c2[1]),
+        e = b - d,
+        f = toRadian(c1[0]) - toRadian(c2[0]);
+    b = 2 * Math.asin(Math.sqrt(Math.pow(Math.sin(e / 2), 2) + Math.cos(b) * Math.cos(d) * Math.pow(Math.sin(f / 2), 2)));
+    b *= R;
+    return b;
+}
+
 function coordinateEqual(c1: Coordinate, c2: Coordinate): boolean {
     const x1 = c1[0], y1 = c1[1], z1 = c1[2];
     const x2 = c2[0], y2 = c2[1], z2 = c2[2];
@@ -33,7 +55,7 @@ function coordinateEqual(c1: Coordinate, c2: Coordinate): boolean {
 }
 
 function calDistance(c1: Coordinate, c2: Coordinate): number {
-    const d = getDistance((c1 as any), (c2 as any));
+    const d = measureLenBetween(c1, c2);
     const dz = c2[2] - c1[2];
     if (dz === 0) {
         return d;
@@ -67,7 +89,7 @@ function getRotationX(c1: Coordinate, c2: Coordinate, routePlayer: RoutePlayer) 
     if (dz === 0) {
         return routePlayer.tempRotaionX;
     }
-    const distance = getDistance((c1 as any), (c2 as any));
+    const distance = measureLenBetween(c1, c2);
     const rad = Math.atan2(dz, distance);
     const value = -rad / Math.PI * 180;
     if (Math.abs(value) === 90) {
