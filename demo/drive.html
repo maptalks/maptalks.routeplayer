@@ -209,9 +209,7 @@
                 player = new maptalks.RoutePlayer(data, { speed: 4, debug: true });
                 console.log(player);
 
-                const line = new maptalks.LineString(data.map(d => {
-                    return d.coordinate
-                }), {
+                const line = new maptalks.LineString(player.getCoordinates(), {
                     symbol: {
                         lineWidth: 5,
                         lineColor: 'red'

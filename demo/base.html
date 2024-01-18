@@ -68,9 +68,7 @@
             showVertex(e, vertexs, debugLayer);
         });
 
-        const line = new maptalks.LineString(data.map(d => {
-            return d.coordinate
-        }), {
+        const line = new maptalks.LineString(player.getCoordinates(), {
             symbol: {
                 lineColor: 'red'
             }

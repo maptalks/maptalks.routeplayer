@@ -81,9 +81,7 @@
 
         let currentModel;
         function addLine() {
-            const line = new maptalks.LineString(data.map(d => {
-                return d.coordinate
-            }));
+            const line = new maptalks.LineString(player.getCoordinates());
             const baseLine = threeLayer.toPath(line, { width: 5 }, new THREE.MeshPhongMaterial({ color: 'red', side: 2 }));
             threeLayer.addMesh(baseLine);
             const info = player.getStartInfo();
