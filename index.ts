@@ -23,7 +23,8 @@ type RoutePlayerOptions = {
 type FormatDataOptions = {
     duration?: number,
     coordinateKey?: string,
-    timeKey?: string
+    timeKey?: string,
+    unitTime?: number
 }
 
 
@@ -105,7 +106,7 @@ function getRotationX(c1: Coordinate, c2: Coordinate, routePlayer: RoutePlayer) 
 }
 
 export function formatRouteData(data: Array<DataItem | Array<number>>, options?: FormatDataOptions): Array<DataItem> {
-    options = extend({ duration: 0, coordinateKey: 'coordinate', timeKey: 'time' }, options);
+    options = extend({ duration: 0, coordinateKey: 'coordinate', timeKey: 'time', unitTime: 1 }, options);
     if (!isArray(data)) {
         console.error('data is not array ', data);
         return [];
@@ -114,9 +115,10 @@ export function formatRouteData(data: Array<DataItem | Array<number>>, options?:
         console.error('data.length should >1 ', data);
         return [];
     }
-    let { duration, coordinateKey, timeKey } = options;
+    let { duration, coordinateKey, timeKey, unitTime } = options;
     duration = duration || 0;
     duration = Math.max(0, duration);
+    unitTime = Math.max(0, unitTime);
     const len = data.length;
     let dirty = false;
     let tempCoordinate: Coordinate, totalDistance = 0;
@@ -203,7 +205,7 @@ export function formatRouteData(data: Array<DataItem | Array<number>>, options?:
                 console.error('time is not number:', obj);
                 return [];
             }
-            obj._time = obj[timeKey];
+            obj._time = obj[timeKey] * unitTime;
         }
         result.push(obj);
     }
@@ -371,7 +373,7 @@ export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
             // @ts-ignore
             this.fire(EVENT_PLAYING, result);
         }
-        const time = t * this.getSpeed() * this.getUnitTime();
+        const time = t * this.getSpeed() * 1 / this.getUnitTime();
         this.time += time;
         this._play();
         return this;
