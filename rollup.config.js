@@ -40,7 +40,7 @@ function getEntry() {
 export default [
     {
         input: getEntry(),
-        external: external,
+        // external: external,
         plugins: plugins,
         output: {
             'format': 'umd',
@@ -73,7 +73,7 @@ export default [
     // },
     {
         input: getEntry(),
-        external: external,
+        // external: external,
         plugins: plugins.concat([terser()]),
         output: {
             'format': 'umd',

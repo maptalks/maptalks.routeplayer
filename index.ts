@@ -1,8 +1,10 @@
-import * as maptalks from 'maptalks';
 // import getDistance from 'geolib/es/getDistance';
+import Class from 'maptalks/src/core/Class';
+import Eventable from 'maptalks/src/core/Eventable';
+import { isNumber, extend, isObject, now, } from 'maptalks/src/core/util/common';
+import { GUID } from 'maptalks/src/core/util/util';
 import getRhumbLineBearing from 'geolib/es/getRhumbLineBearing';
 const isArray = Array.isArray;
-const { isNumber, extend, now, isObject, GUID } = maptalks.Util;
 
 type Coordinate = Array<number>;
 type DataItem = {
@@ -239,7 +241,7 @@ const EVENT_PLAYEND = 'playend';
 const EVENT_VERTEX = 'vertex';
 const EVENT_TIME = 'settime';
 
-export class RoutePlayer extends maptalks.Eventable(maptalks.Class) {
+export class RoutePlayer extends Eventable(Class) {
     public options: RoutePlayerOptions;
     private dirty: boolean;
     private startTime: number;
