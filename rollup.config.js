@@ -17,7 +17,7 @@ let outro = pkg.name + ' v' + pkg.version;
 
 outro = `typeof console !== 'undefined' && console.log('${outro}');`;
 
-const external = ['maptalks'];
+// const external = ['maptalks'];
 const FILEMANE = pkg.name;
 const sourceMap = !production;
 
