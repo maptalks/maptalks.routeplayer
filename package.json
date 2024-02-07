@@ -8,7 +8,6 @@
     "url": "https://github.com/maptalks/maptalks.routeplayer.git"
   },
   "main": "dist/maptalks.routeplayer.js",
-  "browser": "dist/maptalks.routeplayer.js",
   "types": "dist/index.d.ts",
   "module": "dist/index.js",
   "unpkg": "dist/maptalks.routeplayer.js",
@@ -35,7 +34,7 @@
     "geolib": "3.3.3"
   },
   "devDependencies": {
-    "maptalks": "1.0.0-rc.25",
+    "maptalks": "1.0.0-rc.31",
     "cross-env": "^5.1.4",
     "eslint": "^6.2.2",
     "eslint-config-standard": "^14.1.0",

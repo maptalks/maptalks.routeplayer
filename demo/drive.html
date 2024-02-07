@@ -8,7 +8,7 @@
 <script type='text/javascript' src='https://cdn.jsdelivr.net/npm/maptalks/dist/maptalks.min.js'></script>
 <script type='text/javascript'
     src='https://cdn.jsdelivr.net/npm/@maptalks/gl-layers/dist/maptalks-gl-layers.js'></script>
-<script src="https://cdn.jsdelivr.net/npm/maptalks.routeplayer/dist/maptalks.routeplayer.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/maptalks.routeplayer@latest/dist/maptalks.routeplayer.js"></script>
 <script type='text/javascript' src='./util.js'></script>
 <style>
     .container {
@@ -209,9 +209,7 @@
                 player = new maptalks.RoutePlayer(data, { speed: 4, debug: true });
                 console.log(player);
 
-                const line = new maptalks.LineString(data.map(d => {
-                    return d.coordinate
-                }), {
+                const line = new maptalks.LineString(player.getCoordinates(), {
                     symbol: {
                         lineWidth: 5,
                         lineColor: 'red'
