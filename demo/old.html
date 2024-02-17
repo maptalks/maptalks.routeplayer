@@ -50,7 +50,7 @@
 
         const data = maptalks.formatRouteData(route.path3, {});
         console.log(data);
-        const player = new maptalks.RoutePlayer(data, { speed: 4, debug: true, unitTime: 10 });
+        const player = new maptalks.RoutePlayer(data, { speed: 4, debug: true, unitTime: 1 });
         console.log(player);
 
         player.on('playstart playing playend vertex pause time', e => {
