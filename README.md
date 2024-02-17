@@ -7,6 +7,7 @@ Route Player plugin for maptalks.js.
 *  support 2d/3d Layer.
 * high-performance
 * customizable
+* Supports any map engine
 
 ![screenshot](https://user-images.githubusercontent.com/13678919/45591786-16929580-b98e-11e8-95fe-83ee73a15d1b.png)
 
@@ -153,6 +154,27 @@ const data = formatRouteData(route, {
 The automatically generated time is milliseconds, by `new Date().getTime()`
 
 **duration unit is milliseconds**
+
+* support custom `unitTime`
+
+```js
+// the time unit is second
+const route = [{
+        coord: [120, 31, 0],
+        t: 301
+    },
+    {
+        coord: [122, 32, 0],
+        t: 541
+    },
+    //other coordinates
+];
+const data = formatRouteData(route, {
+    coordinateKey: 'coord',
+    timeKey: 't',
+    unitTime: 1000 //to millisecond
+});
+```
 
 ### `RoutePlayer`
 
@@ -384,14 +406,20 @@ We welcome any kind of contributions including issue reportings, pull requests, 
 
 ## Changelog
 
+* 1.0.0-alpha.5
+
+  + formatRouteData support `unitTime`
+  + fix `unitTime` error when playing
+  + Supports any map engine
+
 * 1.0.0-alpha.3
 
-  - Optimize getDistance performance
-  - add `getCoordinates()` method
+  + Optimize getDistance performance
+  + add `getCoordinates()` method
 
 * 1.0.0-alpha.2
 
-  - add `getCurrentVertex()` method
+  + add `getCurrentVertex()` method
 
 * 1.0.0-alpha.1
-  - refactor [details](https://github.com/maptalks/maptalks.routeplayer/pull/46)
+  + refactor [details](https://github.com/maptalks/maptalks.routeplayer/pull/46)
