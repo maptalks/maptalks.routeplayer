@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+<meta charset='UTF-8' />
+<meta name='viewport' content='width=device-width, initial-scale=1' />
+<title>地图 - 显示</title>
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.css" rel="stylesheet">
+<link rel="stylesheet" href="./style.css" />
+<script src="https://cdn.jsdelivr.net/npm/maptalks.routeplayer@latest/dist/maptalks.routeplayer.js"></script>
+<script type='text/javascript' src='./util.js'></script>
+<script type='text/javascript' src='./data/data.js'></script>
+<style>
+    .my-div-icon {
+        /* padding: 2px; */
+        background-color: black;
+        color: white;
+        text-align: center;
+        border-radius: 15px;
+        font-size: 10px;
+    }
+</style>
+
+<body>
+    <div class="tools">
+        <div class="item"> <button onclick="start()">play</button></div>
+        <div class="item"> <button onclick="pause()">pause</button></div>
+        <!-- <div class="item"> <button onclick="replay()">重播</button></div> -->
+        <div class="item"> <button onclick="setIndex()">setIndex</button></div>
+        <div class="item"> <button onclick="setTime()">setTime</button></div>
+        <div class="item"> <button onclick="setPercent()">setPercent</button></div>
+        <div class="item"> <button onclick="finish()">finish</button></div>
+        <div class="item"> <button onclick="reset()">reset</button></div>
+        <div class="item">
+            <label for="speed">speed</label>
+            <input type="range" id="speed" name="volume" min="1" max="100" value="4" />
+        </div>
+        <div class="item">
+            <label for="speed">auto set map center</label>
+            <input id="automapcenter" type="checkbox" />
+        </div>
+    </div>
+    <div id="map" class="container"></div>
+
+    <script>
+
+        function reverseCoordinates(coordinates) {
+            if (Array.isArray(coordinates[0])) {
+                return coordinates.map(c => {
+                    return reverseCoordinates(c);
+                })
+            }
+            const [lng, lat] = coordinates;
+            return [lat, lng];
+        }
+        var map = L.map(document.querySelector('#map'), {
+            zoomControl: false
+        }).setView([120.61158328, 31.36078557].reverse(), 14);
+
+        L.tileLayer('https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+
+        // const debugLayer = createDebugLayer(map);
+        let autoUpdateMapCenter = false;
+
+        const data = maptalks.formatRouteData(coordinates, { duration: 1000 * 60 * 10 });
+        console.log(data);
+        const player = new maptalks.RoutePlayer(data, { speed: 4, debug: true });
+        console.log(player);
+
+        player.on('playstart playing playend vertex pause time', e => {
+            console.log(e.type);
+        })
+
+        player.on('playing', e => {
+            if (autoUpdateMapCenter) {
+                map.setView(reverseCoordinates(e.coordinate));
+            }
+            point.setLatLng(reverseCoordinates(e.coordinate));
+        });
+        let vertexs = [];
+
+        function removePoints(points) {
+            points.forEach(point => {
+                point.remove();
+            });
+        }
+
+
+        function showVertex(e, vertexs) {
+            const data = e.data;
+            const index = e.index;
+            console.log(index);
+            if (!vertexs[index]) {
+                const coordinate = data.coordinate;
+                var myIcon = L.divIcon({ className: 'my-div-icon', html: index + '', iconSize: [15, 15], });
+                const point = L.marker(reverseCoordinates(coordinate), {
+                    icon: myIcon
+                });
+                vertexs[index] = point;
+            }
+            const point = vertexs[index];
+            if (!point._map) {
+                point.addTo(map);
+            }
+
+            const needRemoves = vertexs.slice(index + 1, Infinity);
+            if (needRemoves.length) {
+                removePoints(needRemoves);
+            }
+        }
+
+        player.on('vertex', e => {
+            showVertex(e, vertexs);
+        });
+
+        const line = L.polyline(reverseCoordinates(player.getCoordinates())).addTo(map);
+
+        const point = L.marker(reverseCoordinates(player.getStartCoordinate())).addTo(map);
+
+        function start() {
+            player.play();
+        }
+        function pause() {
+            player.pause();
+        }
+
+        function finish() {
+            player.finish();
+        }
+
+        function reset() {
+            player.reset();
+            removePoints(vertexs);
+            point.setLatLng(reverseCoordinates(player.getStartCoordinate()));
+            if (autoUpdateMapCenter) {
+                map.setView(reverseCoordinates(player.getStartCoordinate()));
+            }
+        }
+
+        function replay() {
+            reset();
+            player.replay();
+        }
+
+        function setIndex() {
+            const index = 20;
+            player.setIndex(index);
+        }
+
+        function setTime() {
+            const t = player.getStartTime() / 2 + player.getEndTime() / 2;
+            player.setTime(t);
+        }
+
+        function setPercent() {
+            player.setPercent(0.4);
+        }
+
+        document.querySelector('#speed').addEventListener('change', e => {
+            player.setSpeed(parseFloat(e.target.value));
+        })
+        document.querySelector('#automapcenter').addEventListener('change', e => {
+            autoUpdateMapCenter = (e.target.checked);
+        })
+
+    </script>
+</body>
+
+</html>
