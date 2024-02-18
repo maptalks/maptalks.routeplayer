@@ -37,7 +37,7 @@ function getEntry() {
     return path.join(__dirname, './index.ts');
 }
 
-export default [
+const bundles = [
     {
         input: getEntry(),
         // external: external,
@@ -46,10 +46,10 @@ export default [
             'format': 'umd',
             'name': 'maptalks',
             'file': `dist/${FILEMANE}.js`,
-            'sourcemap': sourceMap,
+            'sourcemap': true,
             'extend': true,
             'banner': banner,
-            'outro' : outro,
+            'outro': outro,
             'globals': {
                 'maptalks': 'maptalks'
             }
@@ -82,7 +82,7 @@ export default [
             'sourcemap': false,
             'extend': true,
             'banner': banner,
-            'outro' : outro,
+            'outro': outro,
             'globals': {
                 'maptalks': 'maptalks'
             }
@@ -90,3 +90,5 @@ export default [
     }
 
 ];
+
+export default production ? bundles : bundles.slice(0, 1);
