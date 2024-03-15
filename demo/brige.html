@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html>
+<meta charset='UTF-8' />
+<meta name='viewport' content='width=device-width, initial-scale=1' />
+<title>地图 - 显示</title>
+<link rel="stylesheet" href="./style.css" />
+<link rel='stylesheet' href='https://cdn.jsdelivr.net/npm/maptalks/dist/maptalks.css' />
+<script type='text/javascript' src='https://cdn.jsdelivr.net/npm/geolib@3.3.4/lib/index.min.js'></script>
+<script type='text/javascript' src='https://cdn.jsdelivr.net/npm/maptalks/dist/maptalks.min.js'></script>
+<script type='text/javascript'
+    src='https://cdn.jsdelivr.net/npm/@maptalks/gl-layers/dist/maptalks-gl-layers.js'></script>
+<script src="https://cdn.jsdelivr.net/npm/maptalks.routeplayer@latest/dist/maptalks.routeplayer.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gcoord@1.0.5/dist/gcoord.global.min.js"></script>
+<script type='text/javascript' src='./util.js'></script>
+
+<body>
+    <div class="tools">
+        <div class="item"> <button onclick="start()">play</button></div>
+        <div class="item"> <button onclick="pause()">pause</button></div>
+        <div class="item"> <button onclick="finish()">finish</button></div>
+        <div class="item"> <button onclick="reset()">reset</button></div>
+        <div class="item">
+            <label for="speed">speed</label>
+            <input type="range" id="speed" name="volume" min="1" max="100" value="1" />
+        </div>
+    </div>
+    <div id="map" class="container"></div>
+
+    <script>
+        const modelOffsetAngle = 90;
+        let autoUpdateMapCenter = false;
+        const map = new maptalks.Map("map", {
+            "center": [120.59008264, 31.27596115], "zoom": 16.754070740314983, "pitch": 60.95000000000009, "bearing": -0.20583227677184368,
+            baseLayer: new maptalks.TileLayer('base', {
+                urlTemplate:
+                    'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+                subdomains: ['a', 'b', 'c', 'd'],
+                attribution: '&copy; <a href="https://www.esri.com/en-us/home">esri</a>'
+            })
+        });
+
+
+        const lineLayer = new maptalks.VectorLayer("line", {
+            enableAltitude: true,
+            geometryEvents: false,
+            forceRenderOnMoving: true,
+            forceRenderOnZooming: true,
+            forceRenderOnRotating: true,
+            // progressiveRender: true,
+            // progressiveRenderCount: 100
+        }).addTo(map);
+        const pointLayer = new maptalks.VectorLayer('point', {
+            enableAltitude: true,
+            // collision: true
+        }).addTo(map);
+
+        const debugLayer = createDebugLayer(map);
+
+        const playerList = [];
+        function addLine() {
+            fetch('./data/brige.json').then(res => res.json()).then(geojson => {
+
+                geojson.features = geojson.features.filter(f => {
+                    return f.geometry.type === 'LineString';
+                });
+                geojson.features.forEach(f => {
+                    f.geometry.coordinates = f.geometry.coordinates.map(c => {
+                        const coord = gcoord.transform(c, gcoord.AMap, gcoord.WGS84);
+                        coord[2] = c[2];
+                        return coord;
+                    })
+                })
+                const features = geojson.features;
+                const lines = maptalks.GeoJSON.toGeometry(geojson, (line => {
+                    line.setSymbol({
+                        lineColor: '#fff',
+                        lineWidth: 4
+                    })
+                }));
+                lineLayer.addGeometry(lines);
+                const players = features.map(f => {
+                    const coordinates = f.geometry.coordinates;
+                    const pathLength = geolib.getPathLength(coordinates);
+                    const duration = pathLength * 200;
+                    // console.log(duration);
+                    const data = maptalks.formatRouteData(coordinates, { duration });
+                    return new maptalks.RoutePlayer(data, { speed: 1, debug: true, autoPlay: false });
+                });
+
+                players.forEach(player => {
+                    const info = player.getStartInfo();
+                    const model = new maptalks.Marker(info.coordinate, {
+                        symbol: {
+                            // markerType: 'ellipse',
+                            markerWidth: 30,
+                            markerHeight: 30,
+                            markerFile: './data/poi.png'
+                        }
+                    });
+                    pointLayer.addGeometry(model);
+                    playerList.push({
+                        player,
+                        model
+                    })
+                    updateModelPosition(info, model);
+                })
+                listenEvents();
+            })
+
+
+
+        }
+        addLine();
+
+        function updateModelPosition(e, model) {
+            const { coordinate, rotationZ, rotationX } = e;
+            if (!model) {
+                return;
+            }
+            model.setCoordinates(coordinate);
+            // model.setRotation(rotationX, 0, rotationZ + modelOffsetAngle);
+        }
+
+        function listenEvents() {
+            playerList.forEach(d => {
+                const { player, model } = d;
+                player.on('playstart playing playend vertex pause', e => {
+                    // console.log(e.type);
+                })
+
+                player.on('playing', e => {
+                    updateModelPosition(e, model);
+                    // point.setCoordinates(e.coordinate);
+                });
+                // let vertexs = [];
+                // player.on('vertex', e => {
+                //     showVertex(e, vertexs, debugLayer);
+                // });
+            });
+        }
+
+
+        function start() {
+            playerList.forEach(d => {
+                const { player, model } = d;
+                player.play();
+            });
+        }
+        function pause() {
+            playerList.forEach(d => {
+                const { player, model } = d;
+                player.pause();
+            });
+        }
+
+        function finish() {
+            playerList.forEach(d => {
+                const { player, model } = d;
+                player.finish();
+            });
+        }
+
+        function reset() {
+
+            playerList.forEach(d => {
+                const { player, model } = d;
+                player.reset();
+                updateModelPosition(player.getStartInfo(), model);
+            });
+
+
+        }
+
+
+        document.querySelector('#speed').addEventListener('change', e => {
+            playerList.forEach(d => {
+                const { player, model } = d;
+                player.setSpeed(parseFloat(e.target.value));
+            });
+
+        })
+    </script>
+</body>
+
+</html>
