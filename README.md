@@ -22,6 +22,7 @@ Route Player plugin for maptalks.js.
 * [test perf by GLTFLayer](https://maptalks.github.io/maptalks.routeplayer/demo/perf-3d.html).
 * [test perf 800000 coordinate points](https://maptalks.github.io/maptalks.routeplayer/demo/perf-big.html).
 * [coordinate stop](https://maptalks.github.io/maptalks.routeplayer/demo/coordinate-stop.html).
+* [real-line](https://maptalks.github.io/maptalks.routeplayer/demo/real-line.html).
 * [brige](https://maptalks.github.io/maptalks.routeplayer/demo/brige.html).
 * [spring](https://maptalks.github.io/maptalks.routeplayer/demo/spring.html).
 * [leaflet demo](https://maptalks.github.io/maptalks.routeplayer/demo/leaflet.html).
