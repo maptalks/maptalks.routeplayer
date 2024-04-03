@@ -11,6 +11,12 @@ Route Player plugin for maptalks.js.
 
 ![screenshot](https://user-images.githubusercontent.com/13678919/45591786-16929580-b98e-11e8-95fe-83ee73a15d1b.png)
 
+## About Design
+
+- This plugin focuses on the management, control, and scheduling of trajectory data. To ensure absolute low coupling(该插件专注于轨迹数据的管理、控制和调度。确保绝对低耦合)
+- The source of trajectory data is not within the design scope. The data can come from GPS trajectories, mathematical equations, physical simulations, such as ABS(轨迹数据来源不在设计范围内。数据可以来自GPS轨迹、数学方程、物理模拟，如ABS)
+- The display and consumption of data are fully entrusted to users. You can use any map engine, which can be 2D layers, 3D layers, 2D images, 3D models, etc. It's entirely up to you to decide(数据的展示消费完全委托给用户。您可以使用任何地图引擎，可以是二维图层、三维图层、二维图像、三维模型等。完全由您决定)
+
 ## Examples
 
 * [Basic demo](https://maptalks.github.io/maptalks.routeplayer/demo/base.html).
