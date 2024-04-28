@@ -10,6 +10,7 @@
   "main": "dist/maptalks.routeplayer.js",
   "types": "dist/index.d.ts",
   "module": "dist/index.js",
+  "module_browser": "dist/maptalks.routeplayer.es.js",
   "unpkg": "dist/maptalks.routeplayer.js",
   "jsdelivr": "dist/maptalks.routeplayer.js",
   "files": [

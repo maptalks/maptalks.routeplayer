@@ -19,7 +19,6 @@ outro = `typeof console !== 'undefined' && console.log('${outro}');`;
 
 // const external = ['maptalks'];
 const FILEMANE = pkg.name;
-const sourceMap = !production;
 
 const plugins = [
     json(),
@@ -55,22 +54,21 @@ const bundles = [
             }
         }
     },
-    // {
-    //     input: getEntry(),
-    //     external: external,
-    //     plugins: plugins,
-    //     output: {
-    //         'sourcemap': false,
-    //         'format': 'es',
-    //         // banner,
-    //         'file': `dist/${FILEMANE}.mjs`,
-    //         'extend': true,
-    //         'banner': banner,
-    //         'globals': {
-    //             'maptalks': 'maptalks'
-    //         }
-    //     }
-    // },
+    {
+        input: getEntry(),
+        // external,
+        plugins: plugins,
+        output: {
+            'sourcemap': true,
+            'format': 'es',
+            'file': `dist/${FILEMANE}.es.js`,
+            'extend': true,
+            'banner': banner,
+            'globals': {
+                'maptalks': 'maptalks'
+            }
+        }
+    },
     {
         input: getEntry(),
         // external: external,
@@ -79,7 +77,7 @@ const bundles = [
             'format': 'umd',
             'name': 'maptalks',
             'file': `dist/${FILEMANE}.min.js`,
-            'sourcemap': false,
+            'sourcemap': true,
             'extend': true,
             'banner': banner,
             'outro': outro,
