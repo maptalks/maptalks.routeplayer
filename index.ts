@@ -450,9 +450,9 @@ export class RoutePlayer extends Eventable(Class) {
             const c1: Coordinate = this.data[len - 2].coordinate, c2: Coordinate = item.coordinate;
             const rotationZ = getRotationZ(c1, c2, this);
             const rotationX = getRotationX(c1, c2, this);
+            this.playend = true;
             // @ts-ignore
             this.fire(EVENT_PLAYEND, { coordinate: item.coordinate, rotationZ, rotationX });
-            this.playend = true;
             if (this.options.repeat) {
                 const playing = this.playing;
                 this.reset();
