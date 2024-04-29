@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html>
+<meta charset='UTF-8' />
+<meta name='viewport' content='width=device-width, initial-scale=1' />
+<title>地图 - 显示</title>
+<link rel='stylesheet' href='https://cdn.jsdelivr.net/npm/maptalks/dist/maptalks.css' />
+<link rel="stylesheet" href="./style.css" />
+<script type='text/javascript' src='https://cdn.jsdelivr.net/npm/maptalks/dist/maptalks.min.js'></script>
+<script type='text/javascript'
+    src='https://cdn.jsdelivr.net/npm/@maptalks/gl-layers/dist/maptalks-gl-layers.js'></script>
+<script src="https://cdn.jsdelivr.net/npm/maptalks.routeplayer@latest/dist/maptalks.routeplayer.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gcoord@1.0.5/dist/gcoord.global.min.js"></script>
+<script type='text/javascript' src='./util.js'></script>
+
+<body>
+    <div class="tools">
+        <div class="item"> <button onclick="start()">play</button></div>
+        <div class="item"> <button onclick="pause()">pause</button></div>
+        <!-- <div class="item"> <button onclick="replay()">重播</button></div> -->
+        <div class="item"> <button onclick="setIndex()">setIndex</button></div>
+        <div class="item"> <button onclick="setTime()">setTime</button></div>
+        <div class="item"> <button onclick="setPercent()">setPercent</button></div>
+        <div class="item"> <button onclick="finish()">finish</button></div>
+        <div class="item"> <button onclick="reset()">reset</button></div>
+        <div class="item">
+            <label for="speed">speed</label>
+            <input type="range" id="speed" name="volume" min="1" max="100" value="1" />
+        </div>
+        <div class="item">
+            <label for="speed">auto set map center</label>
+            <input id="automapcenter" type="checkbox" />
+        </div>
+    </div>
+    <div id="map" class="container"></div>
+
+    <script>
+
+        //time unit is second
+        const coordinates = [
+            { "coordinate": [121.62405324867802, 31.15815265075375, 0], "time": 1 },
+            { "coordinate": [121.62485215369634, 31.1583001060458, 0], "time": 22 },
+
+            { "coordinate": [121.62598524120608, 31.158516820225344, 0], "time": 50 },
+            { "coordinate": [121.62614450004958, 31.15855033268312, 0], "time": 60 },
+            { "coordinate": [121.6261732188575, 31.15833808691721, 0], "time": 100 },
+            { "coordinate": [121.62623587807457, 31.15799402434996, 0], "time": 130 },
+            { "coordinate": [121.6263585857082, 31.157538251233603, 0], "time": 150 },
+            { "coordinate": [121.62645779613536, 31.157120457284492, 0], "time": 170 },
+
+        ].map(d => {
+            return {
+                time: d.time,
+                coordinate: gcoord.transform(d.coordinate, gcoord.AMap, gcoord.WGS84)
+            }
+        })
+
+        const coordinates1 = [
+            { "coordinate": [121.626478682541, 31.157024386757683, 0], "time": 210 },
+            { "coordinate": [121.62720187433865, 31.15716514121729, 0], "time": 245 },
+            { "coordinate": [121.62738201958791, 31.15721429351899, 0], "time": 280 },
+            { "coordinate": [121.62751778122504, 31.156765219269317, 0], "time": 320 },
+            { "coordinate": [121.62671104380456, 31.156602122124497, 0], "time": 365 },
+            { "coordinate": [121.62578159875045, 31.156430087845678, 0], "time": 400 },
+            { "coordinate": [121.62527249261132, 31.156334016618956, 0], "time": 456 },
+            { "coordinate": [121.62515500657923, 31.156304971810385, 0], "time": 500 },
+            { "coordinate": [121.62518372538705, 31.15654626687339, 0], "time": 567 },
+            { "coordinate": [121.62518633618777, 31.156604356333872, 0], "time": 612 }
+        ].map(d => {
+            return {
+                time: d.time,
+                coordinate: gcoord.transform(d.coordinate, gcoord.AMap, gcoord.WGS84)
+            }
+        })
+
+        const map = new maptalks.Map("map", {
+            "center": [121.62113589, 31.15943104], "zoom": 18.83296421092538, "pitch": 47.849999999999994, "bearing": -5.249999999999318,
+            baseLayer: new maptalks.TileLayer('base', {
+                urlTemplate:
+                    'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+                subdomains: ['a', 'b', 'c', 'd'],
+                attribution: '&copy; <a href="https://www.esri.com/en-us/home">esri</a>'
+            })
+        });
+
+        const debugLayer = createDebugLayer(map);
+        let autoUpdateMapCenter = false;
+
+        const data = maptalks.formatRouteData(coordinates, { unitTime: 1000 });
+        console.log(data);
+        const player = new maptalks.RoutePlayer(data, { speed: 1, debug: true });
+        console.log(player);
+
+        let needUpdate = true;
+
+        player.on('playend', e => {
+            if (!needUpdate) {
+                return;
+            }
+            needUpdate = false;
+            // console.log('end');
+            const data = maptalks.formatRouteData(coordinates.concat(coordinates1), { unitTime: 1000 });
+            const time = player.getCurrentTime();
+            player.setData(data);
+            player.setTime(time);
+            player.play();
+            line.setCoordinates(player.getCoordinates());
+
+
+        })
+
+        player.on('playstart playing playend vertex pause time', e => {
+            // console.log(e.type);
+        })
+
+        player.on('playing', e => {
+            if (autoUpdateMapCenter) {
+                map.setCenter(e.coordinate);
+            }
+            point.setCoordinates(e.coordinate);
+        });
+        let vertexs = [];
+        player.on('vertex', e => {
+            showVertex(e, vertexs, debugLayer);
+        });
+
+        const line = new maptalks.LineString(player.getCoordinates(), {
+            symbol: {
+                lineColor: 'red'
+            }
+        }).addTo(debugLayer);
+
+        const point = new maptalks.Marker(player.getStartCoordinate(), {
+            zIndex: 1
+        }).addTo(debugLayer);
+
+        function start() {
+            player.play();
+        }
+        function pause() {
+            player.pause();
+        }
+
+        function finish() {
+            player.finish();
+        }
+
+        function reset() {
+            player.reset();
+            debugLayer.removeGeometry(vertexs);
+            point.setCoordinates(player.getStartCoordinate());
+            if (autoUpdateMapCenter) {
+                map.setCenter(player.getStartCoordinate());
+            }
+        }
+
+        function replay() {
+            reset();
+            player.replay();
+        }
+
+        function setIndex() {
+            const index = 20;
+            player.setIndex(index);
+        }
+
+        function setTime() {
+            const t = player.getStartTime() / 2 + player.getEndTime() / 2;
+            player.setTime(t);
+        }
+
+        function setPercent() {
+            player.setPercent(0.4);
+        }
+
+        document.querySelector('#speed').addEventListener('change', e => {
+            player.setSpeed(parseFloat(e.target.value));
+        })
+        document.querySelector('#automapcenter').addEventListener('change', e => {
+            autoUpdateMapCenter = (e.target.checked);
+        })
+
+    </script>
+</body>
+
+</html>

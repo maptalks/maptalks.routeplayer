@@ -31,6 +31,7 @@ Route Player plugin for maptalks.js.
 * [realtime-line](https://maptalks.github.io/maptalks.routeplayer/demo/real-line.html).
 * [brige](https://maptalks.github.io/maptalks.routeplayer/demo/brige.html).
 * [spring](https://maptalks.github.io/maptalks.routeplayer/demo/spring.html).
+* [update data](https://maptalks.github.io/maptalks.routeplayer/demo/update-data.html).
 * [leaflet demo](https://maptalks.github.io/maptalks.routeplayer/demo/leaflet.html).
 
 ## Install
