@@ -20,6 +20,7 @@ Route Player plugin for maptalks.js.
 ## Examples
 
 * [Basic demo](https://maptalks.github.io/maptalks.routeplayer/demo/base.html).
+* [Marker rotate](https://maptalks.github.io/maptalks.routeplayer/demo/marker-rotate.html).
 * [with GLTFLayer](https://maptalks.github.io/maptalks.routeplayer/demo/gltflayer.html).
 * [with ThreeLayer](https://maptalks.github.io/maptalks.routeplayer/demo/threelayer.html).
 * [simple road](https://maptalks.github.io/maptalks.routeplayer/demo/road.html).
