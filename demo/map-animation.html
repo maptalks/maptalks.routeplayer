@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html>
+<meta charset='UTF-8' />
+<meta name='viewport' content='width=device-width, initial-scale=1' />
+<title>地图 - 显示</title>
+<link rel="stylesheet" href="./style.css" />
+<link rel='stylesheet' href='https://cdn.jsdelivr.net/npm/maptalks/dist/maptalks.css' />
+<script type='text/javascript' src='https://cdn.jsdelivr.net/npm/maptalks/dist/maptalks.min.js'></script>
+<script type='text/javascript'
+    src='https://cdn.jsdelivr.net/npm/@maptalks/gl-layers/dist/maptalks-gl-layers.js'></script>
+<script type="text/javascript"
+    src="https://cdn.jsdelivr.net/npm/@maptalks/transcoders.draco/dist/transcoders.draco.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/maptalks.routeplayer@latest/dist/maptalks.routeplayer.js"></script>
+<script type='text/javascript' src='https://cdn.jsdelivr.net/npm/geolib@3.3.4/lib/index.min.js'></script>
+<script type='text/javascript' src='./util.js'></script>
+<script type='text/javascript' src='./data/data.js'></script>
+
+<body>
+    <div class="tools">
+        <div class="item"> <button onclick="start()">play</button></div>
+        <div class="item"> <button onclick="pause()">pause</button></div>
+        <!-- <div class="item"> <button onclick="replay()">重播</button></div> -->
+        <div class="item"> <button onclick="setIndex()">setIndex</button></div>
+        <div class="item"> <button onclick="setTime()">setTime</button></div>
+        <div class="item"> <button onclick="setPercent()">setPercent</button></div>
+        <div class="item"> <button onclick="finish()">finish</button></div>
+        <div class="item"> <button onclick="reset()">reset</button></div>
+        <div class="item">
+            <label for="speed">speed</label>
+            <input type="range" id="speed" name="volume" min="1" max="100" value="10" />
+        </div>
+        <div class="item">
+            <label for="speed"> map follow</label>
+            <input id="automapcenter" type="checkbox" checked />
+        </div>
+    </div>
+    <div id="map" class="container"></div>
+
+    <script>
+        const modelOffsetAngle = 180;
+        let autoUpdateMapCenter = true;
+        const map = new maptalks.Map("map", {
+            "center": [108.95937058, 34.22004365], "zoom": 19.101079217065173, "pitch": 70.400000000000006, "bearing": 0,
+            zoomControl: true
+        });
+
+        const baseLayer = new maptalks.TileLayer('base', {
+            urlTemplate:
+                'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+            subdomains: ['a', 'b', 'c', 'd'],
+            attribution: '&copy; <a href="https://www.esri.com/en-us/home">esri</a>',
+            maxAvailableZoom: 18
+        })
+
+        const layer = new maptalks.Geo3DTilesLayer("3dtiles", {
+            services: [
+                {
+                    url: "http://resource.dvgis.cn/data/3dtiles/dayanta/tileset.json",
+
+                    maximumScreenSpaceError: 1.0,
+                    pointOpacity: 0.5,
+                    pointSize: 3,
+                    heightOffset: -420,
+                },
+            ],
+        });
+
+        const gltfLayer = new maptalks.GLTFLayer("gltf");
+        const lineLayer = new maptalks.LineStringLayer('line');
+        const pointLayer = new maptalks.PointLayer('point');
+        // 添加到GroupGLLayer中
+        // GroupGLLayer能实现抗锯齿等后处理，也能加入其他三维图层，让子图层都融合到同一个三维空间中
+        const sceneConfig = {
+            postProcess: {
+                enable: true,
+                antialias: { enable: false }
+            }
+        };
+        const groupLayer = new maptalks.GroupGLLayer('group', [baseLayer, layer, lineLayer, gltfLayer, pointLayer], { sceneConfig });
+        groupLayer.addTo(map);
+
+        const debugLayer = createDebugLayer(map);
+
+        /**start**/
+        const symbol = {
+            url: "./data/drone1.glb",
+            modelHeight: 5,
+            // rotationZ: -45
+        };
+        let player, currentModel, isRotating = false;
+        let vertexs = [];
+
+        fetch('./data/dayata-road.json').then(res => res.json()).then(json => {
+            const data = maptalks.formatRouteData(json, { duration: 1000 * 60 * 10 });
+            console.log(data);
+            player = new maptalks.RoutePlayer(data, { speed: 10, debug: true });
+            console.log(player);
+            addLine();
+            eventsListen();
+
+        })
+
+        function eventsListen() {
+            player.on('playstart playing playend vertex pause', e => {
+                console.log(e.type);
+            })
+
+            player.on('playing', e => {
+                if (autoUpdateMapCenter && !isRotating) {
+                    // map.setCenter(e.coordinate);
+                    map.setView({
+                        center: e.coordinate,
+                        // pitch: e.rotationX
+                    })
+                }
+                updateModelPosition(e);
+                // point.setCoordinates(e.coordinate);
+            });
+
+            player.on('vertex', e => {
+                // console.log(e);
+                showVertex(e, vertexs, debugLayer);
+                const coordinate = e.coordinate;
+                const index = e.index;
+                const item = player.getData()[index + 1];
+                let nextCoordinate;
+                if (item) {
+                    nextCoordinate = item.coordinate;
+                }
+                if (nextCoordinate && autoUpdateMapCenter) {
+                    isRotating = true;
+                    let bearing = geolib.getRhumbLineBearing(coordinate, nextCoordinate);
+                    console.log(bearing);
+                    if (bearing > 180) {
+                        bearing = bearing - 360
+                    }
+
+                    map.animateTo({
+                        bearing,
+                        center: coordinate
+                    }, {
+                        duration: 1000
+                    }, frame => {
+                        if (frame.state.playState === 'finished') {
+                            isRotating = false;
+                        }
+                    })
+                }
+            });
+        }
+
+
+
+        function addLine() {
+            const line = new maptalks.LineString(player.getCoordinates(), {
+                symbol: {
+                    lineWidth: 5
+                }
+            });
+            lineLayer.addGeometry(line);
+            const info = player.getStartInfo();
+            currentModel = new maptalks.GLTFMarker(info.coordinate, {
+                symbol,
+            });
+            gltfLayer.addGeometry(currentModel);
+            updateModelPosition(info);
+
+            const points = player.getData().map(d => {
+                return new maptalks.Marker(d.coordinate, {
+                    symbol: {
+                        textName: d.name,
+                        textFill: '#fff',
+                        textHaloFill: '#000',
+                        textHaloRadius: 1
+                    }
+                })
+            });
+            pointLayer.addGeometry(points);
+
+        }
+
+        function updateModelPosition(e) {
+            const { coordinate, rotationZ, rotationX } = e;
+            if (!currentModel) {
+                return;
+            }
+            // if (Math.abs(rotationX) > 40) {
+            //     console.log(rotationX);
+            // }
+            currentModel.setCoordinates(coordinate);
+            currentModel.setRotation(rotationX, 0, rotationZ + modelOffsetAngle);
+        }
+
+
+
+        function start() {
+            player.play();
+        }
+        function pause() {
+            player.pause();
+        }
+
+        function finish() {
+            player.finish();
+        }
+
+        function reset() {
+            player.reset();
+            debugLayer.removeGeometry(vertexs);
+            if (autoUpdateMapCenter) {
+                map.setCenter(player.getStartCoordinate());
+            }
+            updateModelPosition(player.getStartInfo());
+        }
+
+        function replay() {
+            reset();
+            player.replay();
+        }
+
+        function setIndex() {
+            const index = 20;
+            player.setIndex(index);
+        }
+
+        function setTime() {
+            const t = player.getStartTime() / 2 + player.getEndTime() / 2;
+            player.setTime(t);
+        }
+
+        function setPercent() {
+            player.setPercent(0.4);
+        }
+
+        document.querySelector('#speed').addEventListener('change', e => {
+            player.setSpeed(parseFloat(e.target.value));
+        })
+        document.querySelector('#automapcenter').addEventListener('change', e => {
+            autoUpdateMapCenter = (e.target.checked);
+        })
+
+    </script>
+</body>
+
+</html>
