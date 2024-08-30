@@ -25,6 +25,7 @@ Route Player plugin for maptalks.js.
 * [with ThreeLayer](https://maptalks.github.io/maptalks.routeplayer/demo/threelayer.html).
 * [map animation](https://maptalks.github.io/maptalks.routeplayer/demo/map-animation.html).
 * [simple road](https://maptalks.github.io/maptalks.routeplayer/demo/road.html).
+* [simulated traffic](https://maptalks.github.io/maptalks.routeplayer/demo/traffic.html).
 * [drive road](https://maptalks.github.io/maptalks.routeplayer/demo/drive.html).
 * [test perf by VectorLayer](https://maptalks.github.io/maptalks.routeplayer/demo/perf-base.html).
 * [test perf by GLTFLayer](https://maptalks.github.io/maptalks.routeplayer/demo/perf-3d.html).
