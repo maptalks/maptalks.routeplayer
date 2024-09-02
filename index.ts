@@ -757,3 +757,11 @@ function loop(timestamp) {
     requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);
+
+if (typeof document !== 'undefined' && document.addEventListener) {
+    document.addEventListener('visibilitychange', e => {
+        if (document.visibilityState === 'visible') {
+            time = now();
+        }
+    })
+}
