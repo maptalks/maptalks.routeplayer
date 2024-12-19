@@ -78,19 +78,19 @@ function getRotationZ(c1: Coordinate, c2: Coordinate, routePlayer: RoutePlayer):
         return routePlayer.tempRotationZ;
     }
     const bearing = getRhumbLineBearing((c1 as any), (c2 as any));
-    const rotaionZ = -bearing;
-    routePlayer.tempRotationZ = rotaionZ;
-    return rotaionZ;
+    const rotationZ = -bearing;
+    routePlayer.tempRotationZ = rotationZ;
+    return rotationZ;
 }
 
 function getRotationX(c1: Coordinate, c2: Coordinate, routePlayer: RoutePlayer) {
     if (coordinateEqual(c1, c2)) {
-        return routePlayer.tempRotaionX;
+        return routePlayer.tempRotationX;
     }
     const z1 = c1[2], z2 = c2[2];
     const dz = z2 - z1;
     if (dz === 0) {
-        return routePlayer.tempRotaionX;
+        return routePlayer.tempRotationX;
     }
     const distance = measureLenBetween(c1, c2);
     const rad = Math.atan2(dz, distance);
@@ -101,9 +101,9 @@ function getRotationX(c1: Coordinate, c2: Coordinate, routePlayer: RoutePlayer) 
             console.warn('dz:', dz);
             console.warn('dx', distance);
         }
-        return routePlayer.tempRotaionX;
+        return routePlayer.tempRotationX;
     }
-    routePlayer.tempRotaionX = value;
+    routePlayer.tempRotationX = value;
     return value;
 }
 
@@ -249,7 +249,7 @@ export class RoutePlayer extends Eventable(Class) {
     private time: number;
     private playing: boolean;
     private playend: boolean;
-    public tempRotaionX: number;
+    public tempRotationX: number;
     public tempRotationZ: number;
     private coordinate: Coordinate;
     private data: Array<DataItem>;
@@ -283,7 +283,7 @@ export class RoutePlayer extends Eventable(Class) {
         this.playing = false;
         this.playend = false;
         this.index = -1;
-        this.tempRotaionX = 0;
+        this.tempRotationX = 0;
         this.tempRotationZ = 0;
         this.coordinate = this.data[0].coordinate;
         for (let i = 0, len = data.length; i < len; i++) {
