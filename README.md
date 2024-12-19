@@ -203,7 +203,7 @@ new RoutePlayer(routeData, options)
 * routeData **Array** an object array containing routes data, from `formatRouteData` function run result 
 * options **Object**
     - unitTime **Number** unit time, default is 1 ,Internally used milliseconds as a unit, if the time unit of your data is not milliseconds, please set its value,For example, if your data time unit is seconds, we can set it to 1000(内部使用毫秒作为单位，如果您的数据的时间单位不是毫秒，请设置其值。例如，如果您数据的时间单元是秒，我们可以将其设置为1000)
-    - speed **Number** the speed of play. Note that this is the speed of time playback, not the physical speed. As for the speed of the path, it is determined by the time data in your path, which can be understood as the fast forward function in video playback(注意这个是时间播放的速度，不是物理里的速度,至于路径的速度是有你的路径里时间数据决定，可以理解成视屏播放里的快进功能)
+    - speed **Number** Play at double speed. Note that this is the speed of time playback, not the speed in physics. As for the speed of the path, it is determined by the time data in your path, which can be understood as the playback speed doubling function in video playback(注意这个是时间播放的速度，不是物理里的速度,至于路径的速度是有你的路径里时间数据决定，可以理解成视屏播放里的播放倍速功能)
     - debug **Boolean** 
     - autoPlay **Boolean** Whether auto play
     - repeat **Boolean** Whether repeat play
