@@ -13,9 +13,9 @@ Route Player plugin for maptalks.js.
 
 ## About Design
 
-- This plugin focuses on the management, control, and scheduling of trajectory data. To ensure absolute low coupling(该插件专注于轨迹数据的管理、控制和调度。确保绝对低耦合)
-- The source of trajectory data is not within the design scope. The data can come from GPS trajectories, mathematical equations, physical simulations, such as ABS(轨迹数据来源不在设计范围内。数据可以来自GPS轨迹、数学方程、物理模拟，如ABS)
-- The display and consumption of data are fully entrusted to users. You can use any map engine, which can be 2D layers, 3D layers, 2D images, 3D models, etc. It's entirely up to you to decide(数据的展示消费完全委托给用户。您可以使用任何地图引擎，可以是二维图层、三维图层、二维图像、三维模型等。完全由您决定)
+* This plugin focuses on the management, control, and scheduling of trajectory data. To ensure absolute low coupling(该插件专注于轨迹数据的管理、控制和调度。确保绝对低耦合)
+* The source of trajectory data is not within the design scope. The data can come from GPS trajectories, mathematical equations, physical simulations, such as ABS(轨迹数据来源不在设计范围内。数据可以来自GPS轨迹、数学方程、物理模拟，如ABS)
+* The display and consumption of data are fully entrusted to users. You can use any map engine, which can be 2D layers, 3D layers, 2D images, 3D models, etc. It's entirely up to you to decide(数据的展示消费完全委托给用户。您可以使用任何地图引擎，可以是二维图层、三维图层、二维图像、三维模型等。完全由您决定)
 
 ## Examples
 
@@ -200,13 +200,13 @@ const data = formatRouteData(route, {
 new RoutePlayer(routeData, options)
 ```
 
-* routeData **Array** an object array containing routes data, from `formatRouteData` function run result 
-* options **Object**
-    - unitTime **Number** unit time, default is 1 ,Internally used milliseconds as a unit, if the time unit of your data is not milliseconds, please set its value,For example, if your data time unit is seconds, we can set it to 1000(内部使用毫秒作为单位，如果您的数据的时间单位不是毫秒，请设置其值。例如，如果您数据的时间单元是秒，我们可以将其设置为1000)
-    - speed **Number** Play at double speed. Note that this is the speed of time playback, not the speed in physics. As for the speed of the path, it is determined by the time data in your path, which can be understood as the playback speed doubling function in video playback(注意这个是时间播放的速度，不是物理里的速度,至于路径的速度是有你的路径里时间数据决定，可以理解成视屏播放里的播放倍速功能)
-    - debug **Boolean** 
-    - autoPlay **Boolean** Whether auto play
-    - repeat **Boolean** Whether repeat play
+* `routeData`**Array** an object array containing routes data, from `formatRouteData` function run result 
+* `options`**Object**
+    - `options.unitTime` **Number** unit time, default is 1 ,Internally used milliseconds as a unit, if the time unit of your data is not milliseconds, please set its value,For example, if your data time unit is seconds, we can set it to 1000(内部使用毫秒作为单位，如果您的数据的时间单位不是毫秒，请设置其值。例如，如果您数据的时间单元是秒，我们可以将其设置为1000)
+    - `options.speed` **Number** Play at double speed. Note that this is the speed of time playback, not the speed in physics. As for the speed of the path, it is determined by the time data in your path, which can be understood as the playback speed doubling function in video playback(注意这个是时间播放的速度，不是物理里的速度,至于路径的速度是有你的路径里时间数据决定，可以理解成视屏播放里的播放倍速功能)
+    - `options.debug` **Boolean** 
+    - `options.autoPlay` **Boolean** Whether auto play
+    - `options.repeat` **Boolean** Whether repeat play
 
 ```js
 import {
