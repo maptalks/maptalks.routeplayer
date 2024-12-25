@@ -4,7 +4,7 @@
 
 Route Player plugin for maptalks.js.
 
-*  support 2d/3d Layer.
+* support 2d/3d Layer.
 * high-performance
 * customizable
 * Supports any map engine
@@ -192,6 +192,28 @@ const data = formatRouteData(route, {
 });
 ```
 
+* Support Cartesian coordinate system `isCartesian`
+
+```js
+// the time unit is second
+const route = [{
+        coord: [10000, -10000, 0],
+        t: 301
+    },
+    {
+        coord: [20000, 0, 0],
+        t: 541
+    },
+    //other coordinates
+];
+const data = formatRouteData(route, {
+    coordinateKey: 'coord',
+    timeKey: 't',
+    unitTime: 1000 //to millisecond,
+    isCartesian: true
+});
+```
+
 ### `RoutePlayer`
 
 #### constructor
@@ -207,6 +229,7 @@ new RoutePlayer(routeData, options)
     - `options.debug` **Boolean** 
     - `options.autoPlay` **Boolean** Whether auto play
     - `options.repeat` **Boolean** Whether repeat play
+    - `options.isCartesian` **Boolean** Is it Cartesian coordinate system
 
 ```js
 import {
