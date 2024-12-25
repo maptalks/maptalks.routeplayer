@@ -36,6 +36,7 @@ Route Player plugin for maptalks.js.
 * [spring](https://maptalks.github.io/maptalks.routeplayer/demo/spring.html).
 * [update data](https://maptalks.github.io/maptalks.routeplayer/demo/update-data.html).
 * [UIMarker](https://maptalks.github.io/maptalks.routeplayer/demo/uimarker.html).
+* [identity(Cartesian coordinate system)](https://maptalks.github.io/maptalks.routeplayer/demo/identity.html).
 * [leaflet demo](https://maptalks.github.io/maptalks.routeplayer/demo/leaflet.html).
 
 ## Install
