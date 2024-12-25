@@ -118,6 +118,14 @@ player.play();
 
 format route data util for `RoutePlayer`
 
+* `route`: path data `Array<object>`
+* `options`:`object`
+    * `options.duration`: Route duration, if necessary
+    * `options.coordinateKey`: Attribute name of coordinate point
+    * `options.timeKey`: Name of the time field
+    * `options.unitTime`: Time unit, default 1, internal time is in milliseconds
+    * `options.isCartesian`: Are they Cartesian coordinates
+
 ```js
 const route = [{
         coordinate: [120, 31, 0],
