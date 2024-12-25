@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html>
+<meta charset='UTF-8' />
+<meta name='viewport' content='width=device-width, initial-scale=1' />
+<title>地图 - 显示</title>
+<link rel='stylesheet' href='https://cdn.jsdelivr.net/npm/maptalks/dist/maptalks.css' />
+<link rel="stylesheet" href="./style.css" />
+<script type='text/javascript' src='https://cdn.jsdelivr.net/npm/maptalks-gl/dist/maptalks-gl.js'></script>
+<script src="../dist/maptalks.routeplayer.js"></script>
+<script type='text/javascript' src='./util.js'></script>
+<!-- <script type='text/javascript' src='./data/data.js'></script> -->
+
+<body>
+    <div class="tools">
+        <div class="item"> <button onclick="start()">play</button></div>
+        <div class="item"> <button onclick="pause()">pause</button></div>
+        <!-- <div class="item"> <button onclick="replay()">重播</button></div> -->
+        <div class="item"> <button onclick="setIndex()">setIndex</button></div>
+        <div class="item"> <button onclick="setTime()">setTime</button></div>
+        <div class="item"> <button onclick="setPercent()">setPercent</button></div>
+        <div class="item"> <button onclick="finish()">finish</button></div>
+        <div class="item"> <button onclick="reset()">reset</button></div>
+        <div class="item">
+            <label for="speed">speed</label>
+            <input type="range" id="speed" name="volume" min="1" max="100" value="4" />
+        </div>
+        <div class="item">
+            <label for="speed">auto set map center</label>
+            <input id="automapcenter" type="checkbox" />
+        </div>
+    </div>
+    <div id="map" class="container"></div>
+
+    <script>
+
+        const geojson = { "type": "Feature", "geometry": { "type": "LineString", "coordinates": [[-11968, 8944], [-1344, 10096], [64, 11568], [5376, 8144], [7648, 4848], [7680, 144], [3808, -4912], [-4064, -6960], [-10464, -7088], [-11648, -5232], [-10048, -3728], [-5856, -2384], [-5088, -304], [-5440, 1616], [-7872, 2352], [-9856, 1840], [-11520, 560], [-13504, 144], [-15296, 2320], [-15968, 3728], [-15232, 5040], [-13760, 5872], [-11904, 5744], [-11488, 4720], [-10016, 4144], [-8000, 5328], [-7584, 6640], [-5728, 8208], [-1248, 7344], [-224, 4048], [-2336, 1200], [480, -272], [3200, 1200], [3520, 2864], [3200, 4400], [1536, 7632]] }, "properties": null };
+
+        const coordinates = geojson.geometry.coordinates;
+        coordinates.forEach(c => {
+            c[2] = 1000 + Math.random() * 2000
+        });
+
+        const modelOffsetAngle = 180;
+        let autoUpdateMapCenter = false;
+
+        const map = new maptalks.Map("map", {
+            center: [0, 0],
+            zoom: 0,
+            spatialReference: {
+                projection: 'identity',
+                resolutions: [
+                    32, 16, 8, 4, 2, 1
+                ],
+                fullExtent: {
+                    'top': 10000,
+                    'left': -10000,
+                    'bottom': -10000,
+                    'right': 10000
+                }
+            }
+        });
+
+        const baseLayer = new maptalks.TileLayer('base', {
+            //other server url
+            //https://github.com/digidem/leaflet-bing-layer
+            urlTemplate: "./data/grid.png",
+            // subdomains: ["t0", "t1", "t2", "t3"],
+            // maxAvailableZoom: 18,
+            // maskClip: true,
+        });
+
+
+
+        const gltfLayer = new maptalks.GLTFLayer("gltf");
+
+        // 添加到GroupGLLayer中
+        // GroupGLLayer能实现抗锯齿等后处理，也能加入其他三维图层，让子图层都融合到同一个三维空间中
+        const sceneConfig = {
+            postProcess: {
+                enable: true,
+                antialias: { enable: false }
+            }
+        };
+
+
+
+        const groupLayer = new maptalks.GroupGLLayer('group', [baseLayer, gltfLayer], { sceneConfig });
+        groupLayer.addTo(map);
+
+        const debugLayer = createDebugLayer(map);
+
+        /**start**/
+        const symbol = {
+            url: "./data/file.glb",
+            modelHeight: 2000,
+            // rotationZ: -45
+        };
+
+        const data = maptalks.formatRouteData(coordinates, { duration: 1000 * 60 * 10, isCartesian: true });
+        console.log(data);
+        const player = new maptalks.RoutePlayer(data, { speed: 4, debug: true, isCartesian: true });
+        console.log(player);
+
+        let currentModel;
+        function addLine() {
+            const line = new maptalks.LineString(player.getCoordinates(), {
+                symbol: {
+                    lineWidth: 5
+                }
+            });
+            debugLayer.addGeometry(line);
+            const info = player.getStartInfo();
+            currentModel = new maptalks.GLTFMarker(info.coordinate, {
+                symbol,
+            });
+            gltfLayer.addGeometry(currentModel);
+            updateModelPosition(info)
+
+        }
+        addLine();
+
+        function updateModelPosition(e) {
+            const { coordinate, rotationZ, rotationX } = e;
+            if (!currentModel) {
+                return;
+            }
+            // if (Math.abs(rotationX) > 40) {
+            //     console.log(rotationX);
+            // }
+            currentModel.setCoordinates(coordinate);
+            currentModel.setRotation(rotationX, 0, rotationZ + modelOffsetAngle);
+        }
+
+        player.on('playstart playing playend vertex pause', e => {
+            console.log(e.type);
+        })
+
+        player.on('playing', e => {
+            if (autoUpdateMapCenter) {
+                map.setCenter(e.coordinate);
+            }
+            updateModelPosition(e);
+            // point.setCoordinates(e.coordinate);
+        });
+        let vertexs = [];
+        player.on('vertex', e => {
+            showVertex(e, vertexs, debugLayer);
+        });
+
+        function start() {
+            player.play();
+        }
+        function pause() {
+            player.pause();
+        }
+
+        function finish() {
+            player.finish();
+        }
+
+        function reset() {
+            player.reset();
+            debugLayer.removeGeometry(vertexs);
+            if (autoUpdateMapCenter) {
+                map.setCenter(player.getStartCoordinate());
+            }
+            updateModelPosition(player.getStartInfo());
+        }
+
+        function replay() {
+            reset();
+            player.replay();
+        }
+
+        function setIndex() {
+            const index = 20;
+            player.setIndex(index);
+        }
+
+        function setTime() {
+            const t = player.getStartTime() / 2 + player.getEndTime() / 2;
+            player.setTime(t);
+        }
+
+        function setPercent() {
+            player.setPercent(0.4);
+        }
+
+        document.querySelector('#speed').addEventListener('change', e => {
+            player.setSpeed(parseFloat(e.target.value));
+        })
+        document.querySelector('#automapcenter').addEventListener('change', e => {
+            autoUpdateMapCenter = (e.target.checked);
+        })
+
+
+
+    </script>
+</body>
+
+</html>

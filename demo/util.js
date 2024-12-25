@@ -103,7 +103,7 @@ function showVertex(e, vertexs, layer, style) {
             markerHeight: 5,
             textSize: 12,
             textName: index,
-            textFill: '#fff'
+            textFill: 'red'
         }
         style.textName = index;
         const point = new maptalks.Marker(coordinate, {

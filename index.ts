@@ -20,13 +20,15 @@ type RoutePlayerOptions = {
     unitTime?: number,
     debug?: boolean,
     autoPlay?: boolean,
-    repeat?: boolean
+    repeat?: boolean,
+    isCartesian?: boolean
 };
 type FormatDataOptions = {
     duration?: number,
     coordinateKey?: string,
     timeKey?: string,
-    unitTime?: number
+    unitTime?: number,
+    isCartesian?: boolean
 }
 
 
@@ -50,6 +52,11 @@ function measureLenBetween(c1: Coordinate, c2: Coordinate) {
     b *= R;
     return b;
 }
+//distance for Cartesian
+function measureLenBetweenOfCartesian(c1: Coordinate, c2: Coordinate) {
+    const dx = c2[0] - c1[0], dy = c2[1] - c1[1];
+    return Math.sqrt(dx * dx + dy * dy);
+}
 
 function coordinateEqual(c1: Coordinate, c2: Coordinate): boolean {
     const x1 = c1[0], y1 = c1[1], z1 = c1[2];
@@ -59,6 +66,15 @@ function coordinateEqual(c1: Coordinate, c2: Coordinate): boolean {
 
 function calDistance(c1: Coordinate, c2: Coordinate): number {
     const d = measureLenBetween(c1, c2);
+    const dz = c2[2] - c1[2];
+    if (dz === 0) {
+        return d;
+    }
+    return Math.sqrt(d * d + dz * dz);
+}
+
+function calDistanceOfCartesian(c1: Coordinate, c2: Coordinate): number {
+    const d = measureLenBetweenOfCartesian(c1, c2);
     const dz = c2[2] - c1[2];
     if (dz === 0) {
         return d;
@@ -77,6 +93,14 @@ function getRotationZ(c1: Coordinate, c2: Coordinate, routePlayer: RoutePlayer):
     if (coordinateEqual(c1, c2)) {
         return routePlayer.tempRotationZ;
     }
+    const options = routePlayer.options;
+    if (options.isCartesian) {
+        const dx = c2[0] - c1[0], dy = c2[1] - c1[1];
+        const rad = Math.atan2(dy, dx);
+        const rotationZ = rad / Math.PI * 180 - 90;
+        routePlayer.tempRotationZ = rotationZ;
+        return rotationZ;
+    }
     const bearing = getRhumbLineBearing((c1 as any), (c2 as any));
     const rotationZ = -bearing;
     routePlayer.tempRotationZ = rotationZ;
@@ -92,9 +116,17 @@ function getRotationX(c1: Coordinate, c2: Coordinate, routePlayer: RoutePlayer) 
     if (dz === 0) {
         return routePlayer.tempRotationX;
     }
-    const distance = measureLenBetween(c1, c2);
+    const options = routePlayer.options;
+    let distance: number;
+    if (options.isCartesian) {
+        distance = measureLenBetweenOfCartesian(c1, c2);
+    } else {
+        distance = measureLenBetween(c1, c2);
+    }
+
     const rad = Math.atan2(dz, distance);
     const value = -rad / Math.PI * 180;
+
     if (Math.abs(value) === 90) {
         if (routePlayer.options.debug) {
             console.warn('cal rotationX error:', c1, c2);
@@ -107,8 +139,17 @@ function getRotationX(c1: Coordinate, c2: Coordinate, routePlayer: RoutePlayer) 
     return value;
 }
 
+function getDistanceFunc(options: FormatDataOptions) {
+    if (options.isCartesian) {
+        return calDistanceOfCartesian;
+    }
+    //other,if need
+
+    return calDistance;
+}
+
 export function formatRouteData(data: Array<DataItem | Array<number>>, options?: FormatDataOptions): Array<DataItem> {
-    options = extend({ duration: 0, coordinateKey: 'coordinate', timeKey: 'time', unitTime: 1 }, options);
+    options = extend({ duration: 0, coordinateKey: 'coordinate', timeKey: 'time', unitTime: 1, isCartesian: false }, options);
     if (!isArray(data)) {
         console.error('data is not array ', data);
         return [];
@@ -193,8 +234,9 @@ export function formatRouteData(data: Array<DataItem | Array<number>>, options?:
             return [];
         }
         coordinate[2] = coordinate[2] || 0;
+        const distanceFunc = getDistanceFunc(options);
         if (i > 0) {
-            const distance = totalDistance + calDistance(tempCoordinate, coordinate);
+            const distance = totalDistance + distanceFunc(tempCoordinate, coordinate);
             obj._distance = distance;
             totalDistance = distance;
         } else {
@@ -231,7 +273,8 @@ const OPTIONS: RoutePlayerOptions = {
     unitTime: 1,
     debug: false,
     autoPlay: false,
-    repeat: false
+    repeat: false,
+    isCartesian: false
 };
 
 const RoutePlayers: Array<RoutePlayer> = [];
