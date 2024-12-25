@@ -120,11 +120,11 @@ format route data util for `RoutePlayer`
 
 * `route`: path data `Array<object>`
 * `options`:`object`
-    * `options.duration`: Route duration, if necessary
-    * `options.coordinateKey`: Attribute name of coordinate point
-    * `options.timeKey`: Name of the time field
-    * `options.unitTime`: Time unit, default 1, internal time is in milliseconds
-    * `options.isCartesian`: Are they Cartesian coordinates
+    - `options.duration`: Route duration, if necessary
+    - `options.coordinateKey`:  Name of the coordinate point
+    - `options.timeKey`: Name of the time field
+    - `options.unitTime`: Time unit, default 1, internal time is in milliseconds. If your data time unit is not milliseconds, you need to configure this parameter
+    - `options.isCartesian`: It's Cartesian coordinates?
 
 ```js
 const route = [{
@@ -140,7 +140,7 @@ const route = [{
 const data = formatRouteData(route, {});
 ```
 
-* support custome coordinateKey and timeKey
+* support custom coordinateKey and timeKey
 
 ```js
 const route = [{
@@ -197,7 +197,7 @@ const route = [{
 const data = formatRouteData(route, {
     coordinateKey: 'coord',
     timeKey: 't',
-    unitTime: 1000 //to millisecond
+    unitTime: 1000 //to millisecond,Automatically convert seconds to milliseconds
 });
 ```
 
@@ -206,7 +206,7 @@ const data = formatRouteData(route, {
 ```js
 // the time unit is second
 const route = [{
-        coord: [10000, -10000, 0],
+        coord: [10000, -10000, 0], //Cartesian coordinate points
         t: 301
     },
     {
@@ -218,7 +218,7 @@ const route = [{
 const data = formatRouteData(route, {
     coordinateKey: 'coord',
     timeKey: 't',
-    unitTime: 1000 //to millisecond,
+    unitTime: 1000, //to millisecond,
     isCartesian: true
 });
 ```
