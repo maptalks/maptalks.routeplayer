@@ -62,9 +62,8 @@
             }
             // console.log(e);
             point.setCoordinates(e.coordinate);
-            point.updateSymbol({
-                markerRotation: getMarkerRotation(e.rotationZ)
-            })
+            point.tempInfo = e;
+            updateMarkerRotate();
         });
         let vertexs = [];
         player.on('vertex', e => {
@@ -84,6 +83,13 @@
             return rotationZ + bearing;
         }
 
+        function updateMarkerRotate() {
+            const info = point.tempInfo;
+            point.updateSymbol({
+                markerRotation: getMarkerRotation(info.rotationZ)
+            })
+        }
+
         const info = player.getStartInfo();
         const point = new maptalks.Marker(info.coordinate, {
             zIndex: 1,
@@ -95,6 +101,7 @@
                 markerRotation: getMarkerRotation(info.rotationZ)
             }
         }).addTo(debugLayer);
+        point.tempInfo = info;
 
         function start() {
             player.play();
@@ -112,9 +119,8 @@
             debugLayer.removeGeometry(vertexs);
             const info = player.getStartInfo();
             point.setCoordinates(info.coordinate);
-            point.updateSymbol({
-                markerRotation: getMarkerRotation(info.rotationZ)
-            })
+            point.tempInfo = info;
+            updateMarkerRotate();
             if (autoUpdateMapCenter) {
                 map.setCenter(player.getStartCoordinate());
             }
@@ -144,6 +150,10 @@
         })
         document.querySelector('#automapcenter').addEventListener('change', e => {
             autoUpdateMapCenter = (e.target.checked);
+        })
+
+        map.on('rotate',e=>{
+            updateMarkerRotate();
         })
 
     </script>
