@@ -148,35 +148,40 @@ function getDistanceFunc(options: FormatDataOptions) {
     return calDistance;
 }
 
-export function formatRouteData(data: Array<DataItem | Array<number>>, options?: FormatDataOptions): Array<DataItem> {
+export function formatRouteData(data: Array<DataItem | Array<number>>, options?: FormatDataOptions): Array<DataItem> | Error {
     options = extend({ duration: 0, coordinateKey: 'coordinate', timeKey: 'time', unitTime: 1, isCartesian: false }, options);
+    let message = '';
     if (!isArray(data)) {
-        console.error('data is not array ', data);
-        return [];
+        message = 'data is not array';
+        console.error(message, data);
+        return new Error(message)
     }
     if (data.length < 2) {
-        console.error('data.length should >1 ', data);
-        return [];
+        message = 'data.length should > 1';
+        console.error(message, data);
+        return new Error(message)
     }
     let { duration, coordinateKey, timeKey, unitTime } = options;
     duration = duration || 0;
     duration = Math.max(0, duration);
     unitTime = Math.max(0, unitTime);
     const len = data.length;
-    let dirty = false;
+    // let dirty = false;
     let tempCoordinate: Coordinate, totalDistance = 0;
     const result: Array<DataItem> = [];
     for (let i = 0; i < len; i++) {
         let item = data[i];
         if (!item) {
-            console.error('has dirty data item:', item);
-            return [];
+            message = 'has dirty data item:';
+            console.error(message, 'index:', i, data);
+            return new Error(message)
         }
         if (isArray(item)) {
             const itemlen = item.length;
             if (itemlen < 2) {
-                console.error('has dirty data item:', item);
-                return [];
+                message = 'has dirty data item:';
+                console.error(message, 'index:', i, data);
+                return new Error(message)
             }
             if (itemlen === 2) {
                 item = { coordinate: item };
@@ -214,8 +219,9 @@ export function formatRouteData(data: Array<DataItem | Array<number>>, options?:
             }
         }
         if (!isObject(item)) {
-            console.error('has dirty data item:', item);
-            return [];
+            message = 'has dirty data item:';
+            console.error(message, 'index:', i, data);
+            return new Error(message)
         }
         // is Coordinate Class
         if ((item as any).toArray) {
@@ -227,11 +233,10 @@ export function formatRouteData(data: Array<DataItem | Array<number>>, options?:
         }
         const { coordinate } = obj;
         if (!coordinate || !isArray(coordinate)) {
-            console.error('coordinate is error:', obj);
-            dirty = true;
-        }
-        if (dirty) {
-            return [];
+            message = 'coordinate is error:';
+            console.error(message, obj);
+            return new Error(message)
+
         }
         coordinate[2] = coordinate[2] || 0;
         const distanceFunc = getDistanceFunc(options);
@@ -246,8 +251,9 @@ export function formatRouteData(data: Array<DataItem | Array<number>>, options?:
         tempCoordinate = coordinate;
         if (duration <= 0) {
             if (!isNumber(obj[timeKey])) {
-                console.error('time is not number:', obj);
-                return [];
+                message = 'time is not number:';
+                console.error(message, obj);
+                return new Error(message)
             }
             obj._time = obj[timeKey] * unitTime;
         }
@@ -299,6 +305,7 @@ export class RoutePlayer extends Eventable(Class) {
     private removed: boolean = false;
     private id: number;
     private index: number;
+    private dirtyHasLog: boolean;
 
     constructor(data: Array<DataItem>, options?: RoutePlayerOptions) {
         super(options);
@@ -315,6 +322,7 @@ export class RoutePlayer extends Eventable(Class) {
     }
 
     _init() {
+        this.dirtyHasLog = false;
         if (this.isDirty()) {
             return this;
         }
@@ -337,7 +345,10 @@ export class RoutePlayer extends Eventable(Class) {
 
     isDirty() {
         if (this.dirty) {
-            console.error(`RoutePlayer(${this.id}) current data is dirty`, this.data);
+            if (!this.dirtyHasLog) {
+                console.error(`RoutePlayer(${this.id}) current data is dirty`, this.data);
+                this.dirtyHasLog = true;
+            }
         }
         return this.dirty;
     }
@@ -687,7 +698,7 @@ export class RoutePlayer extends Eventable(Class) {
             return this;
         }
         this.dirty = false;
-        if (!data || !isArray(data) || data.length < 2) {
+        if (!data || data instanceof Error || !isArray(data) || data.length < 2) {
             this.dirty = true;
             console.error('data is error:', data);
         }
