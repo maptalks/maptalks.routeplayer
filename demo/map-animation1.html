@@ -122,7 +122,6 @@
                 // point.setCoordinates(e.coordinate);
             });
 
-            let preBearing = null;
             player.on('vertex', e => {
                 // console.log(e);
                 showVertex(e, vertexs, debugLayer);
@@ -133,6 +132,9 @@
                 if (item) {
                     nextCoordinate = item.coordinate;
                 }
+                // if (isRotating) {
+                //     return;
+                // }
 
                 if (nextCoordinate && autoUpdateMapCenter) {
                     isRotating = true;
@@ -141,21 +143,20 @@
                     if (bearing > 180) {
                         bearing = bearing - 360
                     }
-                    console.log(bearing);
-                    if (typeof preBearing === 'number') {
-                        if (bearing * preBearing < 0 && Math.abs(Math.abs(preBearing) + Math.abs(bearing) - 360) < 10) {
-                            return;
-                        }
+                    console.log(map.getBearing(), bearing);
+                    const currentBearing = map.getBearing();
+                    let counterclockwise = false;
+                    
+                    if (currentBearing * bearing < 0 && Math.abs(currentBearing - bearing) > 180) {
+                        counterclockwise = true;
                     }
-                    preBearing = bearing;
-
                     const view = {
                         bearing,
                         center: coordinate
                     }
                     map.animateTo(view, {
                         duration: 1000,
-                        // counterclockwise
+                        counterclockwise
                     }, frame => {
                         if (frame.state.playState === 'finished') {
                             isRotating = false;

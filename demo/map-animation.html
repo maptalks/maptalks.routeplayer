@@ -133,11 +133,18 @@
                         bearing = bearing - 360
                     }
 
+                    const currentBearing = map.getBearing();
+                    let counterclockwise = false;
+                    if (currentBearing * bearing < 0 && Math.abs(currentBearing - bearing) > 180) {
+                        counterclockwise = true;
+                    }
+
                     map.animateTo({
                         bearing,
                         center: coordinate
                     }, {
-                        duration: 1000
+                        duration: 1000,
+                        counterclockwise
                     }, frame => {
                         if (frame.state.playState === 'finished') {
                             isRotating = false;
