@@ -37,7 +37,7 @@
   "devDependencies": {
     "maptalks": "1.0.0-rc.31",
     "cross-env": "^5.1.4",
-    "eslint": "^6.2.2",
+    "eslint": "^9.32.0",
     "eslint-config-standard": "^14.1.0",
     "eslint-plugin-import": "^2.18.2",
     "eslint-plugin-node": "^10.0.0",
