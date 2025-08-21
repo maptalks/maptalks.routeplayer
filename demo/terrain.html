@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html>
+<meta charset='UTF-8' />
+<meta name='viewport' content='width=device-width, initial-scale=1' />
+<title>地图 - 显示</title>
+<link rel='stylesheet' href='https://cdn.jsdelivr.net/npm/maptalks/dist/maptalks.css' />
+<link rel="stylesheet" href="./style.css" />
+<script type='text/javascript' src='https://cdn.jsdelivr.net/npm/maptalks-gl/dist/maptalks-gl.js'></script>
+<script src="https://cdn.jsdelivr.net/npm/maptalks.routeplayer@latest/dist/maptalks.routeplayer.js"></script>
+<script src="https://unpkg.com/maptalks.tileclip/dist/maptalks.tileclip.js"></script>
+<script type='text/javascript' src='./util.js'></script>
+<script type='text/javascript' src='./data/data.js'></script>
+
+<body>
+    <div class="tools">
+        <div class="item"> <button onclick="start()">play</button></div>
+        <div class="item"> <button onclick="pause()">pause</button></div>
+        <!-- <div class="item"> <button onclick="replay()">重播</button></div> -->
+        <div class="item"> <button onclick="setIndex()">setIndex</button></div>
+        <div class="item"> <button onclick="setTime()">setTime</button></div>
+        <div class="item"> <button onclick="setPercent()">setPercent</button></div>
+        <div class="item"> <button onclick="finish()">finish</button></div>
+        <div class="item"> <button onclick="reset()">reset</button></div>
+        <div class="item">
+            <label for="speed">speed</label>
+            <input type="range" id="speed" name="volume" min="1" max="100" value="4" />
+        </div>
+        <div class="item">
+            <label for="speed">auto set map center</label>
+            <input id="automapcenter" type="checkbox" />
+        </div>
+    </div>
+    <div id="map" class="container"></div>
+
+    <script>
+        const tileActor = maptalks.getTileActor();
+        const map = new maptalks.Map("map", {
+            "center": [120.54911603, 31.21556687], "zoom": 16.817591349162058, "pitch": 61.250000000000085, "bearing": -2.2499999999998863,
+        });
+
+        const route = [
+            [
+                120.54695490918874,
+                31.213218905150836
+            ],
+            [
+                120.54684649391339,
+                31.21375160018013
+            ],
+            [
+                120.54688260007424,
+                31.213967216374318
+            ],
+            [
+                120.54698540259946,
+                31.214104812734167
+            ],
+            [
+                120.54757724126647,
+                31.21443293327759
+            ],
+            [
+                120.54822185359946,
+                31.214822733302004
+            ],
+            [
+                120.5485302579984,
+                31.215046020666875
+            ],
+            [
+                120.54880530430522,
+                31.21541134635331
+            ],
+            [
+                120.54936372355587,
+                31.216130160408373
+            ],
+            [
+                120.54959431749991,
+                31.216343799130776
+            ],
+            [
+                120.55001105696242,
+                31.216617027135936
+            ],
+            [
+                120.55080285359708,
+                31.216983373844442
+            ],
+            [
+                120.55116679235512,
+                31.217159369076615
+            ],
+            [
+                120.55141125626317,
+                31.217408545285938
+            ],
+            [
+                120.5515195902872,
+                31.217605343256015
+            ],
+            [
+                120.55176123896004,
+                31.21825951657929
+            ],
+            [
+                120.55196403259379,
+                31.218406759587783
+            ],
+            [
+                120.55267795881838,
+                31.21897184176424
+            ],
+            [
+                120.55304186399509,
+                31.21918570331629
+            ],
+            [
+                120.55325855141976,
+                31.219143487197005
+            ],
+            [
+                120.55338911634682,
+                31.219143736842945
+            ],
+            [
+                120.55347244806968,
+                31.219231527955504
+            ],
+            [
+                120.5535002188953,
+                31.21933816038237
+            ],
+            [
+                120.55346131642061,
+                31.219473086767767
+            ],
+            [
+                120.55324738352915,
+                31.219825573274438
+            ],
+            [
+                120.55338625329681,
+                31.220181101351027
+            ],
+            [
+                120.55365013743457,
+                31.22044212904398
+            ],
+            [
+                120.55396955579057,
+                31.220954308508038
+            ],
+            [
+                120.55422507989293,
+                31.221452151353155
+            ],
+            [
+                120.55416947809061,
+                31.221994405276853
+            ],
+            [
+                120.55408611308603,
+                31.222344766734413
+            ],
+            [
+                120.5538666322145,
+                31.222675922774318
+            ],
+            [
+                120.55365543962564,
+                31.22353523187601
+            ],
+            [
+                120.55352205033229,
+                31.224119955412295
+            ],
+            [
+                120.5533775811755,
+                31.224304408835017
+            ],
+            [
+                120.55324255762723,
+                31.22447182737207
+            ],
+            [
+                120.55297582973967,
+                31.224952081879007
+            ],
+            [
+                120.55279522185292,
+                31.225387500433143
+            ],
+            [
+                120.55252014907413,
+                31.22593167359858
+            ],
+            [
+                120.55223669908221,
+                31.226956582025753
+            ],
+            [
+                120.55218666614786,
+                31.227283303244338
+            ],
+            [
+                120.55215610019354,
+                31.227363763940474
+            ],
+            [
+                120.5521060913744,
+                31.227394453310758
+            ],
+            [
+                120.55201441482487,
+                31.227370591225135
+            ],
+            [
+                120.55193385361984,
+                31.227308858677446
+            ],
+            [
+                120.55185329426325,
+                31.22722107509895
+            ],
+            [
+                120.55176439329597,
+                31.227216163596275
+            ],
+            [
+                120.55166437476629,
+                31.227265699624123
+            ],
+            [
+                120.55163103146337,
+                31.227327208271316
+            ],
+            [
+                120.55160602230112,
+                31.22739346980429
+            ],
+            [
+                120.55161990723249,
+                31.227466912869254
+            ],
+            [
+                120.55171435988312,
+                31.22753577838436
+            ],
+            [
+                120.55180047374445,
+                31.227651991942356
+            ],
+            [
+                120.55185321222658,
+                31.228220472029154
+            ],
+            [
+                120.55194486066841,
+                31.228594831494103
+            ],
+            [
+                120.55218932414294,
+                31.228746876322003
+            ],
+            [
+                120.55231433239797,
+                31.228830007878425
+            ],
+            [
+                120.55238933468196,
+                31.22890830504872
+            ],
+            [
+                120.55238654978365,
+                31.228991187025354
+            ],
+            [
+                120.55221982007593,
+                31.229518971450684
+            ],
+            [
+                120.552153132935,
+                31.229668037497042
+            ],
+            [
+                120.55210589310038,
+                31.229810036663586
+            ],
+            [
+                120.55214755121969,
+                31.229978259648952
+            ],
+            [
+                120.55224754621278,
+                31.2301892235505
+            ],
+            [
+                120.55233642329911,
+                31.230461737598645
+            ],
+            [
+                120.55284478856959,
+                31.230725590854018
+            ],
+            [
+                120.55309093485667,
+                31.230985106654575
+            ],
+            [
+                120.55339026829455,
+                31.23126433929556
+            ],
+            [
+                120.55379626986844,
+                31.231452839459127
+            ],
+            [
+                120.55421258560476,
+                31.231647218907312
+            ],
+            [
+                120.55435708760713,
+                31.231744286880044
+            ],
+            [
+                120.55459105236356,
+                31.23176525671143
+            ]
+        ];
+
+
+        // const debugLayer = createDebugLayer(map);
+        // debugLayer.setZIndex(100);
+
+        const debugLayer = new maptalks.PointLayer('point');
+        const lineLayer = new maptalks.LineStringLayer('line');
+        let autoUpdateMapCenter = false;
+
+
+        const baseLayer = new maptalks.TileLayer('base', {
+            urlTemplate:
+                'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+            subdomains: ['a', 'b', 'c', 'd'],
+            attribution: '&copy; <a href="https://www.esri.com/en-us/home">esri</a>'
+        });
+        const terrain = {
+            type: 'mapbox',
+            //强制指定tileSize
+            // tileSize: 256,
+            maxAvailableZoom: 14,
+
+            requireSkuToken: false,
+            urlTemplate: "https://elevation3d.arcgis.com/arcgis/rest/services/WorldElevation3D/Terrain3D/ImageServer/tile/{z}/{y}/{x}",
+            subdomains: ['a', 'b', 'c', 'd'],
+            // colors: colors4,
+            exaggeration: 1,
+        };
+        const group = new maptalks.GroupGLLayer('group', [baseLayer, lineLayer, debugLayer], {
+            terrain
+        });
+
+        group.on('terrainlayercreated', e => {
+            const terrainLayer = group.getTerrainLayer();
+
+            terrainLayer.getRenderer().loadTileBitmap = function (url, tile, callback, options) {
+                // console.log(url);
+                tileActor.encodeTerrainTile({
+                    url: maptalks.Util.getAbsoluteURL(url),
+                    terrainType: 'arcgis',
+                    indexedDBCache: true,
+                    // timeout: 5000
+                }).then(imagebitmap => {
+                    callback(null, imagebitmap)
+
+
+                }).catch(error => {
+                    //do some things
+                    console.error(error);
+                })
+            };
+        })
+        group.addTo(map);
+
+
+
+
+        const data = maptalks.formatRouteData(route, { duration: 1000 * 60 * 10 });
+        console.log(data);
+        const player = new maptalks.RoutePlayer(data, { speed: 4, debug: true });
+        console.log(player);
+
+        const line = new maptalks.LineString(player.getCoordinates(), {
+            symbol: {
+                lineWidth: 2,
+                lineColor: 'blue'
+            }
+        }).addTo(lineLayer);
+
+        const realline = new maptalks.LineString([], {
+            symbol: {
+                lineWidth: 6,
+                lineColor: '#D33A21'
+            }
+        }).addTo(lineLayer);
+
+        const point = new maptalks.Marker(player.getStartCoordinate(), {
+            zIndex: 1,
+            symbol: {
+                markerFile: './data/shan.png'
+            }
+        }).addTo(debugLayer);
+
+
+        function showVertex(e, vertexs, layer, style) {
+            const data = e.data;
+            const index = e.index;
+            console.log(index);
+            if (!vertexs[index]) {
+                const coordinate = queryTerrain(data);
+                style = style || {
+                    markerType: 'ellipse',
+                    markerWidth: 5,
+                    markerHeight: 5,
+                    textSize: 12,
+                    textName: index,
+                    textFill: 'red'
+                }
+                style.textName = index;
+                const point = new maptalks.Marker(coordinate, {
+                    symbol: style
+                });
+                vertexs[index] = point;
+            }
+            const point = vertexs[index];
+            if (!point.getLayer()) {
+                point.addTo(layer);
+            }
+
+            const needRemoves = vertexs.slice(index + 1, Infinity);
+            if (needRemoves.length) {
+                layer.removeGeometry(needRemoves);
+            }
+        }
+
+
+
+        function queryTerrain(e) {
+            const coord = new maptalks.Coordinate(e.coordinate);
+            const result = group.queryTerrain(coord);
+            let altutude = 0;
+            if (result && result.length) {
+                altutude = result[0];
+            }
+            coord.z = altutude;
+            return coord;
+        }
+
+        player.on('playstart playing playend vertex pause time', e => {
+            // console.log(e.type);
+        })
+
+        player.on('playing', e => {
+
+            const coord = queryTerrain(e);
+            point.setCoordinates(coord);
+            updateLine(e);
+
+            if (autoUpdateMapCenter) {
+                map.lookAt({
+                    coordinates: coord.copy(),
+                    distance: 2000
+
+                })
+            }
+        });
+        let vertexs = [];
+        player.on('vertex', e => {
+            showVertex(e, vertexs, debugLayer);
+        });
+
+        function updateLine(e) {
+            const coords = [...player.getCurrentVertex(), e].map(e => {
+                const c = queryTerrain(e);
+                c.z += 3;
+                return c;
+            });
+            realline.setCoordinates(coords);
+        }
+
+
+
+        function start() {
+            player.play();
+        }
+        function pause() {
+            player.pause();
+        }
+
+        function finish() {
+            player.finish();
+        }
+
+        function reset() {
+            realline.setCoordinates([]);
+            player.reset();
+            debugLayer.removeGeometry(vertexs);
+            point.setCoordinates(player.getStartCoordinate());
+            if (autoUpdateMapCenter) {
+                map.setCenter(player.getStartCoordinate());
+            }
+        }
+
+        function replay() {
+            reset();
+            player.replay();
+        }
+
+        function setIndex() {
+            const index = 20;
+            player.setIndex(index);
+        }
+
+        function setTime() {
+            const t = player.getStartTime() / 2 + player.getEndTime() / 2;
+            player.setTime(t);
+        }
+
+        function setPercent() {
+            player.setPercent(0.4);
+        }
+
+        document.querySelector('#speed').addEventListener('change', e => {
+            player.setSpeed(parseFloat(e.target.value));
+        })
+        document.querySelector('#automapcenter').addEventListener('change', e => {
+            autoUpdateMapCenter = (e.target.checked);
+        })
+
+
+    </script>
+</body>
+
+</html>
