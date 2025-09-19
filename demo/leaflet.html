@@ -56,9 +56,33 @@
             zoomControl: false
         }).setView([120.61158328, 31.36078557].reverse(), 14);
 
-        L.tileLayer('https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        const baseLayer = L.tileLayer('https://ecn.{subdomains}.tiles.virtualearth.net/tiles/aquadkey.jpeg?g=14583', {
+            subdomains: ["t0", "t1", "t2", "t3"],
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        }).addTo(map);
+        })
+
+        baseLayer.getTileUrl = function (coord) {
+            const { x, y, z } = coord;
+            var quadkey = toQuadKey(x, y, z);
+            const urlTemplate = this._url;
+            let domain = '';
+            if (this.options['subdomains']) {
+                const subdomains = this.options['subdomains'];
+                if (Array.isArray(subdomains)) {
+                    const length = subdomains.length;
+                    let s = (x + y) % length;
+                    if (s < 0) {
+                        s = 0;
+                    }
+                    domain = subdomains[s];
+                }
+            }
+            return urlTemplate.replace('quadkey', quadkey).replace('{subdomains}', domain);
+        }
+
+        baseLayer.addTo(map);
+
+        console.log(baseLayer);
 
 
         // const debugLayer = createDebugLayer(map);

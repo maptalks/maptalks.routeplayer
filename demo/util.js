@@ -122,6 +122,18 @@ function showVertex(e, vertexs, layer, style) {
     }
 }
 
+function toQuadKey(x, y, z) {
+    var index = ''
+    for (var i = z; i > 0; i--) {
+        var b = 0
+        var mask = 1 << (i - 1)
+        if ((x & mask) !== 0) b++
+        if ((y & mask) !== 0) b += 2
+        index += b.toString()
+    }
+    return index
+}
+
 function createBingLayer() {
     const layer = new maptalks.TileLayer('base', {
         //other server url
@@ -131,18 +143,6 @@ function createBingLayer() {
         maxAvailableZoom: 18,
         maskClip: true,
     });
-
-    function toQuadKey(x, y, z) {
-        var index = ''
-        for (var i = z; i > 0; i--) {
-            var b = 0
-            var mask = 1 << (i - 1)
-            if ((x & mask) !== 0) b++
-            if ((y & mask) !== 0) b += 2
-            index += b.toString()
-        }
-        return index
-    }
 
     layer.getTileUrl = function (x, y, z) {
         var quadkey = toQuadKey(x, y, z);
