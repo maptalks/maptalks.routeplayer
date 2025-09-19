@@ -28,12 +28,7 @@
         let autoUpdateMapCenter = false;
         const map = new maptalks.Map("map", {
             "center": [121.49366811, 31.16693638], "zoom": 11.574666455701587, "pitch": 61.50000000000047, "bearing": -1.9499999999998183,
-            baseLayer: new maptalks.TileLayer('base', {
-                urlTemplate:
-                    'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-                subdomains: ['a', 'b', 'c', 'd'],
-                attribution: '&copy; <a href="https://www.esri.com/en-us/home">esri</a>'
-            })
+            baseLayer: createBingLayer()
         });
 
 
@@ -134,7 +129,7 @@
                     playerList.forEach(d => {
                         const { player, model } = d;
                         player.play();
-                     
+
                     });
                 })
             })

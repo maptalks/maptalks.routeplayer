@@ -121,3 +121,46 @@ function showVertex(e, vertexs, layer, style) {
         layer.removeGeometry(needRemoves);
     }
 }
+
+function createBingLayer() {
+    const layer = new maptalks.TileLayer('base', {
+        //other server url
+        //https://github.com/digidem/leaflet-bing-layer
+        urlTemplate: "https://ecn.{subdomain}.tiles.virtualearth.net/tiles/a{quadkey}.jpeg?g=14583",
+        subdomains: ["t0", "t1", "t2", "t3"],
+        maxAvailableZoom: 18,
+        maskClip: true,
+    });
+
+    function toQuadKey(x, y, z) {
+        var index = ''
+        for (var i = z; i > 0; i--) {
+            var b = 0
+            var mask = 1 << (i - 1)
+            if ((x & mask) !== 0) b++
+            if ((y & mask) !== 0) b += 2
+            index += b.toString()
+        }
+        return index
+    }
+
+    layer.getTileUrl = function (x, y, z) {
+        var quadkey = toQuadKey(x, y, z);
+        const urlTemplate = this.options.urlTemplate;
+        let domain = '';
+        if (this.options['subdomains']) {
+            const subdomains = this.options['subdomains'];
+            if (Array.isArray(subdomains)) {
+                const length = subdomains.length;
+                let s = (x + y) % length;
+                if (s < 0) {
+                    s = 0;
+                }
+                domain = subdomains[s];
+            }
+        }
+        return urlTemplate.replace('{quadkey}', quadkey).replace('{subdomain}', domain);
+    }
+
+    return layer;
+}

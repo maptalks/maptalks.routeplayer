@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html>
+<meta charset='UTF-8' />
+<meta name='viewport' content='width=device-width, initial-scale=1' />
+<title>地图 - 显示</title>
+<link rel='stylesheet' href='https://cdn.jsdelivr.net/npm/maptalks/dist/maptalks.css' />
+<link rel="stylesheet" href="./style.css" />
+<script type='text/javascript' src='https://cdn.jsdelivr.net/npm/maptalks/dist/maptalks.min.js'></script>
+<script type='text/javascript'
+    src='https://cdn.jsdelivr.net/npm/@maptalks/gl-layers/dist/maptalks-gl-layers.js'></script>
+<script src="https://cdn.jsdelivr.net/npm/maptalks.routeplayer@latest/dist/maptalks.routeplayer.js"></script>
+<script type='text/javascript' src='./util.js'></script>
+<script src="https://cdn.jsdelivr.net/npm/gcoord@1.0.5/dist/gcoord.global.min.js"></script>
+<!-- <script type='text/javascript' src='./data/data.js'></script> -->
+<style>
+    .image {
+        max-width: 400px;
+        max-height: 400px;
+    }
+</style>
+
+<body>
+    <div class="tools">
+        <div class="item"> <button onclick="start()">play</button></div>
+        <div class="item"> <button onclick="pause()">pause</button></div>
+        <!-- <div class="item"> <button onclick="replay()">重播</button></div> -->
+        <div class="item"> <button onclick="setIndex()">setIndex</button></div>
+        <div class="item"> <button onclick="setTime()">setTime</button></div>
+        <div class="item"> <button onclick="setPercent()">setPercent</button></div>
+        <div class="item"> <button onclick="finish()">finish</button></div>
+        <div class="item"> <button onclick="reset()">reset</button></div>
+        <div class="item">
+            <label for="speed">speed</label>
+            <input type="range" id="speed" name="volume" min="1" max="100" value="100" />
+        </div>
+        <div class="item">
+            <label for="speed">auto set map center</label>
+            <input id="automapcenter" type="checkbox" />
+        </div>
+    </div>
+    <div id="map" class="container"></div>
+
+    <script>
+
+        const map = new maptalks.Map("map", {
+            "center": [120.61158328, 31.36078557], "zoom": 13.867916986432306, "pitch": 55.6, "bearing": 1.5,
+            baseLayer: new maptalks.TileLayer('base', {
+                urlTemplate: "https://webst01.is.autonavi.com/appmaptile?style=6&x={x}&y={y}&z={z}",
+                subdomains: ['a', 'b', 'c', 'd'],
+                attribution: '&copy; <a href="https://www.esri.com/en-us/home">esri</a>'
+            })
+        });
+
+        const debugLayer = createDebugLayer(map);
+        let autoUpdateMapCenter = false;
+
+        function parsePath(path) {
+            return path.split(';').map(v => {
+                const [lng, lat] = v.split(',');
+                return {
+                    coordinate: gcoord.transform([parseFloat(lng), parseFloat(lat)], gcoord.WGS84, gcoord.AMap)
+                }
+            })
+        }
+
+        let player;
+        let vertexs = [];
+        let stops = [];
+        let currentVertex;
+        let point;
+        fetch('./data/taihu.json').then(res => res.json()).then(json => {
+            const coordinates = parsePath(json.data.trail[1].path);
+            const data = maptalks.formatRouteData(coordinates, { duration: 1000 * 60 * 100 });
+            // console.log(data);
+            player = new maptalks.RoutePlayer(data, { speed: 100, debug: true });
+            console.log(player);
+
+            // player.on('playstart playing playend vertex pause time', e => {
+            //     console.log(e.type);
+            // })
+
+            player.on('playing', e => {
+                if (autoUpdateMapCenter) {
+                    map.setCenter(e.coordinate);
+                }
+                point.setCoordinates(e.coordinate);
+
+            });
+            player.on('vertex', e => {
+                // showVertex(e, vertexs, debugLayer);
+                const currentCoord = new maptalks.Coordinate(e.coordinate);
+                for (let i = 0, len = stops.length; i < len; i++) {
+                    const stop = stops[i];
+                    const coord = stop.getCoordinates();
+                    if (map.computeLength(currentCoord, coord) < 100 && currentVertex !== stop) {
+                        player.pause();
+                        // console.log(stops[i].getProperties());
+                        const { name, img } = stop.getProperties();
+                        point.setInfoWindow({
+                            content: `<div>${name}<br><img class="image" src="./data/gallery/${img}" /></div>`
+                        });
+                        point.openInfoWindow();
+                        setTimeout(() => {
+                            point.closeInfoWindow();
+                            player.play();
+                        }, 2000);
+                        currentVertex = stop;
+                        break;
+                    }
+                }
+            });
+
+            const line = new maptalks.LineString(player.getCoordinates(), {
+                symbol: {
+                    lineColor: '#4672F6'
+                }
+            }).addTo(debugLayer);
+
+
+            point = new maptalks.Marker(player.getStartCoordinate(), {
+                zIndex: 1,
+                symbol: {
+                    markerFile: './data/自行车@2x.png',
+                    markerWidth: 48,
+                    markerHeight: 48
+                }
+            }).addTo(debugLayer);
+            map.setCenter(player.getStartCoordinate());
+
+        })
+
+        fetch('./data/export-1723776006521.geojson').then(res => res.json()).then(geojson => {
+            const points = maptalks.GeoJSON.toGeometry(geojson);
+            debugLayer.addGeometry(points);
+            stops = points;
+        })
+
+
+
+
+        function start() {
+            player.play();
+        }
+        function pause() {
+            player.pause();
+        }
+
+        function finish() {
+            player.finish();
+        }
+
+        function reset() {
+            currentVertex = null;
+            player.reset();
+            debugLayer.removeGeometry(vertexs);
+            point.setCoordinates(player.getStartCoordinate());
+            if (autoUpdateMapCenter) {
+                map.setCenter(player.getStartCoordinate());
+            }
+        }
+
+        function replay() {
+            reset();
+            player.replay();
+        }
+
+        function setIndex() {
+            currentVertex = null;
+            const index = 20;
+            player.setIndex(index);
+        }
+
+        function setTime() {
+            currentVertex = null;
+            const t = player.getStartTime() / 2 + player.getEndTime() / 2;
+            player.setTime(t);
+        }
+
+        function setPercent() {
+            currentVertex = null;
+            player.setPercent(0.4);
+        }
+
+        document.querySelector('#speed').addEventListener('change', e => {
+            player.setSpeed(parseFloat(e.target.value));
+        })
+        document.querySelector('#automapcenter').addEventListener('change', e => {
+            autoUpdateMapCenter = (e.target.checked);
+        })
+
+    </script>
+</body>
+
+</html>

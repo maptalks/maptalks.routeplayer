@@ -66,12 +66,7 @@
 
         const map = new maptalks.Map("map", {
             "center": [121.62113589, 31.15943104], "zoom": 18.83296421092538, "pitch": 47.849999999999994, "bearing": -5.249999999999318,
-            baseLayer: new maptalks.TileLayer('base', {
-                urlTemplate:
-                    'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-                subdomains: ['a', 'b', 'c', 'd'],
-                attribution: '&copy; <a href="https://www.esri.com/en-us/home">esri</a>'
-            })
+            baseLayer: createBingLayer()
         });
 
         const debugLayer = createDebugLayer(map);

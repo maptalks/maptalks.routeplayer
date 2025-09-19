@@ -338,12 +338,7 @@
         let autoUpdateMapCenter = false;
 
 
-        const baseLayer = new maptalks.TileLayer('base', {
-            urlTemplate:
-                'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-            subdomains: ['a', 'b', 'c', 'd'],
-            attribution: '&copy; <a href="https://www.esri.com/en-us/home">esri</a>'
-        });
+        const baseLayer = createBingLayer()
         const terrain = {
             type: 'mapbox',
             //强制指定tileSize

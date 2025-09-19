@@ -29,12 +29,7 @@
         let autoUpdateMapCenter = false;
         const map = new maptalks.Map("map", {
             "center": [120.59008264, 31.27596115], "zoom": 16.754070740314983, "pitch": 60.95000000000009, "bearing": -0.20583227677184368,
-            baseLayer: new maptalks.TileLayer('base', {
-                urlTemplate:
-                    'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-                subdomains: ['a', 'b', 'c', 'd'],
-                attribution: '&copy; <a href="https://www.esri.com/en-us/home">esri</a>'
-            })
+            baseLayer: createBingLayer()
         });
 
 

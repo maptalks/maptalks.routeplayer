@@ -3,7 +3,7 @@
 <meta charset='UTF-8' />
 <meta name='viewport' content='width=device-width, initial-scale=1' />
 <title>地图 - 显示</title>
-<link rel="stylesheet" href="./style.css"/>
+<link rel="stylesheet" href="./style.css" />
 <link rel='stylesheet' href='https://cdn.jsdelivr.net/npm/maptalks/dist/maptalks.css' />
 <script type='text/javascript' src='https://cdn.jsdelivr.net/npm/maptalks-gl/dist/maptalks-gl.js'></script>
 <script type='text/javascript' src='./lib/three.min.js'></script>
@@ -40,12 +40,7 @@
 
         const map = new maptalks.Map("map", {
             "center": [120.54328966, 31.35464419], "zoom": 18.53771555142229, "pitch": 72.0000000000002, "bearing": -15.299999999999274,
-            baseLayer: new maptalks.TileLayer('base', {
-                urlTemplate:
-                    'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-                subdomains: ['a', 'b', 'c', 'd'],
-                attribution: '&copy; <a href="https://www.esri.com/en-us/home">esri</a>'
-            })
+            baseLayer: createBingLayer()
         });
 
         var threeLayer = new maptalks.ThreeLayer('t', {
@@ -155,7 +150,7 @@
             if (autoUpdateMapCenter) {
                 map.setCenter(player.getStartCoordinate());
             }
-            updateModelPosition( player.getStartInfo());
+            updateModelPosition(player.getStartInfo());
         }
 
         function replay() {
