@@ -808,9 +808,13 @@ function loop(timestamp) {
         player._loop(dt);
     }
     time = currentTime;
+    if (typeof requestAnimationFrame !== 'undefined') {
+        requestAnimationFrame(loop);
+    }
+}
+if (typeof requestAnimationFrame !== 'undefined') {
     requestAnimationFrame(loop);
 }
-requestAnimationFrame(loop);
 
 if (typeof document !== 'undefined' && document.addEventListener) {
     document.addEventListener('visibilitychange', e => {
