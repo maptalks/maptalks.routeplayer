@@ -482,7 +482,7 @@ export class RoutePlayer extends Eventable(Class) {
                 // @ts-ignore
                 this.fire(EVENT_VERTEX, { data: item, index: i, coordinate: item.coordinate, time: item._time });
                 // @ts-ignore
-                this.fire(EVENT_PLAYING, { coordinate: item.coordinate, rotationZ, rotationX, time: this.time });
+                this.fire(EVENT_PLAYING, { coordinate: item.coordinate, rotationZ, rotationX, time: item._time});
             }
             if (this.time < _time) {
                 const percent = (this.time - tempTime) / (_time - tempTime);
