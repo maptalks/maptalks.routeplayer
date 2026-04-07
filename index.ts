@@ -482,7 +482,7 @@ export class RoutePlayer extends Eventable(Class) {
                 // @ts-ignore
                 this.fire(EVENT_VERTEX, { data: item, index: i, coordinate: item.coordinate, time: item._time });
                 // @ts-ignore
-                this.fire(EVENT_PLAYING, { coordinate: item.coordinate, rotationZ, rotationX, time: item._time});
+                this.fire(EVENT_PLAYING, { coordinate: item.coordinate, rotationZ, rotationX, time: item._time });
             }
             if (this.time < _time) {
                 const percent = (this.time - tempTime) / (_time - tempTime);
@@ -798,6 +798,7 @@ export class RoutePlayer extends Eventable(Class) {
 //@ts-ignore
 RoutePlayer.mergeOptions(OPTIONS);
 
+const requestAnimationFrameEnable = typeof requestAnimationFrame !== 'undefined';
 let time = now();
 function loop(timestamp) {
     const currentTime = now();
@@ -808,11 +809,11 @@ function loop(timestamp) {
         player._loop(dt);
     }
     time = currentTime;
-    if (typeof requestAnimationFrame !== 'undefined') {
+    if (requestAnimationFrameEnable) {
         requestAnimationFrame(loop);
     }
 }
-if (typeof requestAnimationFrame !== 'undefined') {
+if (requestAnimationFrameEnable) {
     requestAnimationFrame(loop);
 }
 
