@@ -425,7 +425,7 @@ export class RoutePlayer extends Eventable(Class) {
             const result = this._firePlayStart();
             this.index = 0;
             // @ts-ignore
-            this.fire(EVENT_VERTEX, { data: item, index: 0, coordinate: result.coordinate });
+            this.fire(EVENT_VERTEX, { data: item, index: 0, coordinate: result.coordinate, time: item._time });
             // @ts-ignore
             this.fire(EVENT_PLAYING, result);
         }
@@ -443,7 +443,7 @@ export class RoutePlayer extends Eventable(Class) {
         const c1 = item1.coordinate, c2 = item2.coordinate;
         const rotationZ = getRotationZ(c1, c2, this);
         const rotationX = getRotationX(c1, c2, this);
-        const result = { coordinate: item1.coordinate, rotationZ, rotationX };
+        const result = { coordinate: item1.coordinate, rotationZ, rotationX, time: this.startTime };
         // @ts-ignore
         this.fire(EVENT_PLAYSTART, result);
         return result;
@@ -480,9 +480,9 @@ export class RoutePlayer extends Eventable(Class) {
                 const rotationX = getRotationX(c1, c2, this);
                 this.index = i;
                 // @ts-ignore
-                this.fire(EVENT_VERTEX, { data: item, index: i, coordinate: item.coordinate });
+                this.fire(EVENT_VERTEX, { data: item, index: i, coordinate: item.coordinate, time: item._time });
                 // @ts-ignore
-                this.fire(EVENT_PLAYING, { coordinate: item.coordinate, rotationZ, rotationX });
+                this.fire(EVENT_PLAYING, { coordinate: item.coordinate, rotationZ, rotationX, time: this.time });
             }
             if (this.time < _time) {
                 const percent = (this.time - tempTime) / (_time - tempTime);
@@ -492,7 +492,7 @@ export class RoutePlayer extends Eventable(Class) {
                 const rotationZ = getRotationZ(c1, c2, this);
                 const rotationX = getRotationX(c1, c2, this);
                 // @ts-ignore
-                this.fire(EVENT_PLAYING, { coordinate: currentCoordinate, rotationZ, rotationX });
+                this.fire(EVENT_PLAYING, { coordinate: currentCoordinate, rotationZ, rotationX, time: this.time });
                 break;
             }
             tempCoordinate = item.coordinate;
@@ -506,7 +506,7 @@ export class RoutePlayer extends Eventable(Class) {
             const rotationX = getRotationX(c1, c2, this);
             this.playend = true;
             // @ts-ignore
-            this.fire(EVENT_PLAYEND, { coordinate: item.coordinate, rotationZ, rotationX });
+            this.fire(EVENT_PLAYEND, { coordinate: item.coordinate, rotationZ, rotationX, time: this.endTime });
             if (this.options.repeat) {
                 const playing = this.playing;
                 this.reset();
@@ -643,7 +643,7 @@ export class RoutePlayer extends Eventable(Class) {
             const currentCoordinate = getCoordinateByPercent(c1, c2, percent);
             this.index = index - 1;
             // @ts-ignore
-            this.fire(EVENT_VERTEX, { data: item1, index: index - 1 });
+            this.fire(EVENT_VERTEX, { data: item1, index: index - 1, coordinate: item1.coordinate, time: item1._time });
             // @ts-ignore
             this.fire(EVENT_TIME, { time: this.time, coordinate: currentCoordinate });
         }
