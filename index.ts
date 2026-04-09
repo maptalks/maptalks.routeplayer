@@ -3,7 +3,7 @@ import Class from 'maptalks/src/core/Class';
 import Eventable from 'maptalks/src/core/Eventable';
 import { isNumber, extend, isObject, now, } from 'maptalks/src/core/util/common';
 import { GUID } from 'maptalks/src/core/util/util';
-import getRhumbLineBearing from 'geolib/es/getRhumbLineBearing';
+// import getRhumbLineBearing from 'geolib/es/getRhumbLineBearing';
 const isArray = Array.isArray;
 
 type Coordinate = Array<number>;
@@ -37,6 +37,33 @@ const EARTH_RADIUS = 6378137;
 
 function toRadian(d: number) {
     return d * PI;
+}
+
+function toDegree(d: number) {
+    return d * 180 / Math.PI;
+}
+// https://github.com/manuelbieh/geolib/blob/master/src/getRhumbLineBearing.ts
+const getRhumbLineBearing = (origin: Coordinate, dest: Coordinate) => {
+    // difference of longitude coords
+    let diffLon = toRadian(dest[0]) - toRadian(origin[0]);
+
+    // difference latitude coords phi
+    const diffPhi = Math.log(
+        Math.tan(toRadian(dest[1]) / 2 + Math.PI / 4) /
+        Math.tan(toRadian(origin[1]) / 2 + Math.PI / 4)
+    );
+
+    // recalculate diffLon if it is greater than pi
+    if (Math.abs(diffLon) > Math.PI) {
+        if (diffLon > 0) {
+            diffLon = (Math.PI * 2 - diffLon) * -1;
+        } else {
+            diffLon = Math.PI * 2 + diffLon;
+        }
+    }
+
+    //return the angle, normalized
+    return (toDegree(Math.atan2(diffLon, diffPhi)) + 360) % 360;
 }
 
 //from maptalks.js https://github.com/maptalks/maptalks.js/blob/7ad5d423bb3ffb6afad582da7d18f6e9e5bee041/src/geo/measurer/Sphere.js#L18
