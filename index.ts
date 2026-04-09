@@ -32,11 +32,11 @@ type FormatDataOptions = {
 }
 
 
-const pi = Math.PI / 180;
-const R = 6378137;
+const PI = Math.PI / 180;
+const EARTH_RADIUS = 6378137;
 
 function toRadian(d: number) {
-    return d * pi;
+    return d * PI;
 }
 
 //from maptalks.js https://github.com/maptalks/maptalks.js/blob/7ad5d423bb3ffb6afad582da7d18f6e9e5bee041/src/geo/measurer/Sphere.js#L18
@@ -49,7 +49,7 @@ function measureLenBetween(c1: Coordinate, c2: Coordinate) {
         e = b - d,
         f = toRadian(c1[0]) - toRadian(c2[0]);
     b = 2 * Math.asin(Math.sqrt(Math.pow(Math.sin(e / 2), 2) + Math.cos(b) * Math.cos(d) * Math.pow(Math.sin(f / 2), 2)));
-    b *= R;
+    b *= EARTH_RADIUS;
     return b;
 }
 //distance for Cartesian
@@ -408,14 +408,17 @@ export class RoutePlayer extends Eventable(Class) {
         return this;
     }
 
+    _calRotationInfo(c1: Coordinate, c2: Coordinate) {
+        const rotationZ = getRotationZ(c1, c2, this);
+        const rotationX = getRotationX(c1, c2, this);
+        return { rotationZ, rotationX };
+    }
+
     _loop(t: number) {
         if (!this.isAvailable()) {
             return this;
         }
         if (!this.playing || this.playend) {
-            return this;
-        }
-        if (!isNumber(t)) {
             return this;
         }
         if (this.time === this.startTime) {
@@ -441,8 +444,7 @@ export class RoutePlayer extends Eventable(Class) {
             return null;
         }
         const c1 = item1.coordinate, c2 = item2.coordinate;
-        const rotationZ = getRotationZ(c1, c2, this);
-        const rotationX = getRotationX(c1, c2, this);
+        const { rotationZ, rotationX } = this._calRotationInfo(c1, c2);
         const result = { coordinate: item1.coordinate, rotationZ, rotationX, time: this.startTime };
         // @ts-ignore
         this.fire(EVENT_PLAYSTART, result);
@@ -476,8 +478,7 @@ export class RoutePlayer extends Eventable(Class) {
                     c1 = tempCoordinate;
                     c2 = item.coordinate;
                 }
-                const rotationZ = getRotationZ(c1, c2, this);
-                const rotationX = getRotationX(c1, c2, this);
+                const { rotationZ, rotationX } = this._calRotationInfo(c1, c2);
                 this.index = i;
                 // @ts-ignore
                 this.fire(EVENT_VERTEX, { data: item, index: i, coordinate: item.coordinate, time: item._time });
@@ -489,8 +490,7 @@ export class RoutePlayer extends Eventable(Class) {
                 const currentCoordinate = getCoordinateByPercent(tempCoordinate, coordinate, percent);
                 this._setCurrentCoordinate(currentCoordinate);
                 const c1: Coordinate = tempCoordinate, c2: Coordinate = currentCoordinate;
-                const rotationZ = getRotationZ(c1, c2, this);
-                const rotationX = getRotationX(c1, c2, this);
+                const { rotationZ, rotationX } = this._calRotationInfo(c1, c2);
                 // @ts-ignore
                 this.fire(EVENT_PLAYING, { coordinate: currentCoordinate, rotationZ, rotationX, time: this.time });
                 break;
@@ -502,8 +502,7 @@ export class RoutePlayer extends Eventable(Class) {
             const item = this.data[len - 1];
             this._setCurrentCoordinate(item.coordinate);
             const c1: Coordinate = this.data[len - 2].coordinate, c2: Coordinate = item.coordinate;
-            const rotationZ = getRotationZ(c1, c2, this);
-            const rotationX = getRotationX(c1, c2, this);
+            const { rotationZ, rotationX } = this._calRotationInfo(c1, c2);
             this.playend = true;
             // @ts-ignore
             this.fire(EVENT_PLAYEND, { coordinate: item.coordinate, rotationZ, rotationX, time: this.endTime });
@@ -735,10 +734,7 @@ export class RoutePlayer extends Eventable(Class) {
     getStartRotation() {
         const c1 = this.data[0].coordinate;
         const c2 = this.data[1].coordinate;
-        return {
-            rotationZ: getRotationZ(c1, c2, this),
-            rotationX: getRotationX(c1, c2, this)
-        };
+        return this._calRotationInfo(c1, c2);
     }
 
     getStartInfo() {
