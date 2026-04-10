@@ -31,9 +31,7 @@
     "lint": "eslint ./**/*.js",
     "prepare": "npm run build"
   },
-  "dependencies": {
-    "geolib": "3.3.3"
-  },
+  "dependencies": {},
   "devDependencies": {
     "maptalks": "1.0.0-rc.31",
     "cross-env": "^5.1.4",
