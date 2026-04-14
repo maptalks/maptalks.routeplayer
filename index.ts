@@ -349,6 +349,12 @@ export class RoutePlayer extends Eventable(Class) {
         }
     }
 
+    _resetDataPassed() {
+        this.data.forEach(item => {
+            item._passed = false;
+        });
+    }
+
     _init() {
         this.dirtyHasLog = false;
         if (this.isDirty()) {
@@ -365,9 +371,7 @@ export class RoutePlayer extends Eventable(Class) {
         this.tempRotationX = 0;
         this.tempRotationZ = 0;
         this.coordinate = this.data[0].coordinate;
-        for (let i = 0, len = data.length; i < len; i++) {
-            data[i]._passed = false;
-        }
+        this._resetDataPassed();
         return this;
     }
 
@@ -451,10 +455,7 @@ export class RoutePlayer extends Eventable(Class) {
         }
         if (this.time === this.startTime) {
             const item = this.data[0];
-            item._passed = true;
-            this._setCurrentCoordinate(item.coordinate);
             const result = this._firePlayStart();
-            this.index = 0;
             // @ts-ignore
             this.fire(EVENT_VERTEX, { data: item, index: 0, coordinate: result.coordinate, time: item._time });
             // @ts-ignore
@@ -474,6 +475,9 @@ export class RoutePlayer extends Eventable(Class) {
         const c1 = item1.coordinate, c2 = item2.coordinate;
         const { rotationZ, rotationX } = this._calRotationInfo(c1, c2);
         const result = { coordinate: item1.coordinate, rotationZ, rotationX, time: this.startTime };
+        item1._passed = true;
+        this._setCurrentCoordinate(item1.coordinate);
+        this.index = 0;
         // @ts-ignore
         this.fire(EVENT_PLAYSTART, result);
         return result;
@@ -496,11 +500,12 @@ export class RoutePlayer extends Eventable(Class) {
                 continue;
             }
             if (this.time >= _time && !_passed) {
-                item._passed = true;
-                this._setCurrentCoordinate(item.coordinate);
                 if (i === 0) {
                     this._firePlayStart();
                 }
+                item._passed = true;
+                this._setCurrentCoordinate(item.coordinate);
+                this.index = i;
                 let c1: Coordinate, c2: Coordinate;
                 if (!tempCoordinate) {
                     c1 = item.coordinate;
@@ -510,7 +515,7 @@ export class RoutePlayer extends Eventable(Class) {
                     c2 = item.coordinate;
                 }
                 const { rotationZ, rotationX } = this._calRotationInfo(c1, c2);
-                this.index = i;
+
                 // @ts-ignore
                 this.fire(EVENT_VERTEX, { data: item, index: i, coordinate: item.coordinate, time: item._time });
 
@@ -656,10 +661,7 @@ export class RoutePlayer extends Eventable(Class) {
         this.playend = false;
         this.index = -1;
         if (this.startTime === this.time) {
-            for (let i = 0; i < len; i++) {
-                const item = this.data[i];
-                item._passed = false;
-            }
+            this._resetDataPassed();
             this._play();
             // @ts-ignore
             this.fire(EVENT_TIME, Object.assign({}, this.tempPlayingEvent));
