@@ -333,6 +333,7 @@ export class RoutePlayer extends Eventable(Class) {
     private id: number;
     private index: number;
     private dirtyHasLog: boolean;
+    private tempPlayingEvent: any;
 
     constructor(data: Array<DataItem>, options?: RoutePlayerOptions) {
         super(options);
@@ -485,8 +486,11 @@ export class RoutePlayer extends Eventable(Class) {
         this.time = Math.min(this.time, this.endTime);
         let tempCoordinate, tempTime;
         const len = this.data.length;
-        for (let i = 0; i < len; i++) {
+        for (let i = this.index; i < len; i++) {
             const item = this.data[i];
+            if (!item) {
+                continue;
+            }
             const { _time, coordinate, _passed } = item;
             if (_time === undefined) {
                 continue;
@@ -509,8 +513,10 @@ export class RoutePlayer extends Eventable(Class) {
                 this.index = i;
                 // @ts-ignore
                 this.fire(EVENT_VERTEX, { data: item, index: i, coordinate: item.coordinate, time: item._time });
+
+                this.tempPlayingEvent = { coordinate: item.coordinate, rotationZ, rotationX, time: item._time }
                 // @ts-ignore
-                this.fire(EVENT_PLAYING, { coordinate: item.coordinate, rotationZ, rotationX, time: item._time });
+                this.fire(EVENT_PLAYING, this.tempPlayingEvent);
             }
             if (this.time < _time) {
                 const percent = (this.time - tempTime) / (_time - tempTime);
@@ -518,8 +524,9 @@ export class RoutePlayer extends Eventable(Class) {
                 this._setCurrentCoordinate(currentCoordinate);
                 const c1: Coordinate = tempCoordinate, c2: Coordinate = currentCoordinate;
                 const { rotationZ, rotationX } = this._calRotationInfo(c1, c2);
+                this.tempPlayingEvent = { coordinate: currentCoordinate, rotationZ, rotationX, time: this.time };
                 // @ts-ignore
-                this.fire(EVENT_PLAYING, { coordinate: currentCoordinate, rotationZ, rotationX, time: this.time });
+                this.fire(EVENT_PLAYING, this.tempPlayingEvent);
                 break;
             }
             tempCoordinate = item.coordinate;
@@ -645,36 +652,41 @@ export class RoutePlayer extends Eventable(Class) {
         time = Math.max(this.startTime, time);
         time = Math.min(time, this.endTime);
         this.time = time;
-        let index = -1;
-        for (let i = 0, len = this.data.length; i < len; i++) {
-            const item = this.data[i];
-            if (item._time === undefined) {
-                continue;
-            }
-            if (item._time > time) {
+        const len = this.data.length;
+        this.playend = false;
+        this.index = -1;
+        if (this.startTime === this.time) {
+            for (let i = 0; i < len; i++) {
+                const item = this.data[i];
                 item._passed = false;
-                if (index === -1) {
-                    index = i;
+            }
+            this._play();
+            // @ts-ignore
+            this.fire(EVENT_TIME, Object.assign({}, this.tempPlayingEvent));
+        } else if (this.endTime === this.time) {
+            this._play();
+            // @ts-ignore
+            this.fire(EVENT_TIME, Object.assign({}, this.tempPlayingEvent));
+        } else {
+            let hasSetIndex = false;
+            let currentIndex = -1;
+            for (let i = 0; i < len; i++) {
+                const item = this.data[i];
+                const time = item._time;
+                if (time > this.time) {
+                    if (!hasSetIndex) {
+                        currentIndex = i - 1;
+                        hasSetIndex = true;
+                        this.data[currentIndex]._passed = false;
+                    }
+                    item._passed = false;
                 }
             }
-        }
-        if (index === -1) {
-            index = this.data.length - 1;
-        }
-        if (index !== -1) {
-            const item1 = this.data[index - 1], item2 = this.data[index];
-            const t1 = item1._time, t2 = item2._time;
-            const c1 = item1.coordinate, c2 = item2.coordinate;
-            const percent = (this.time - (t1 as number)) / ((t2 as number) - (t1 as number));
-            const currentCoordinate = getCoordinateByPercent(c1, c2, percent);
-            this.index = index - 1;
+            this._play();
+            this.index = currentIndex;
             // @ts-ignore
-            this.fire(EVENT_VERTEX, { data: item1, index: index - 1, coordinate: item1.coordinate, time: item1._time });
-            // @ts-ignore
-            this.fire(EVENT_TIME, { time: this.time, coordinate: currentCoordinate });
+            this.fire(EVENT_TIME, Object.assign({}, this.tempPlayingEvent));
         }
-        this.playend = false;
-        this._play();
         return this;
     }
 
